@@ -1,0 +1,6 @@
+@SeamRipperAPI_HostAddress = http://localhost:5047
+
+GET {{SeamRipperAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
