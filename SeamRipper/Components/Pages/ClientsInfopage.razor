@@ -2,6 +2,10 @@
 @using MudBlazor
 @using SeamRipperData.Models
 @inject SeamRipperData.Services.ClientServices ClientService
+@inject IJSRuntime JS
+@using System.Text
+
+
 
 
 <MudContainer>
@@ -39,19 +43,42 @@
                             <MudButton Color="Color.Primary" OnClick="@(() => EditClient(context.Item))">
                                 <MudIcon Icon="@Icons.Material.Filled.Edit" />
                             </MudButton>
-
                             <MudButton Color="Color.Error" OnClick="@(() => DeleteClient(context.Item))">
                                 <MudIcon Icon="@Icons.Material.Filled.Delete" />
                             </MudButton>
                         </CellTemplate>
                     </TemplateColumn>
                 </Columns>
+                
+
 
                 <PagerContent>
                     <MudDataGridPager T="ClientInfo" />
                 </PagerContent>
 
             </MudDataGrid>
+
+            <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="@DeleteSelectedClients" Disabled="@(!selectedClients.Any())">
+                Delete Selected Clients (@selectedClients.Count)
+            </MudButton>
+            <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="@GenerateRandomClients">
+                Generate Random Clients
+            </MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="async () => await DownloadAllClientsCSV()">
+                <MudIcon Icon="@Icons.Material.Filled.FileDownload" />
+                Export All as CSV
+            </MudButton>
+
+
+
+
+            <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="DownloadSelectedClientsCSV" Disabled="@(!selectedClients.Any())">
+                <MudIcon Icon="@Icons.Material.Filled.FileDownload" />
+                Export Selected as CSV (@selectedClients.Count)
+            </MudButton>
+
+
+
         </MudCardContent>
 
         <!-- Add/Edit Form Section (Inside the same card) -->
@@ -86,20 +113,51 @@
 @code {
     private List<ClientInfo> clients = new();
     private string _quickFilter = "";
-    private HashSet<ClientInfo> _selectedItems = new();
-
-
+    private HashSet<ClientInfo> selectedClients = new();
     private bool showForm = false;
-
-
     private ClientInfo editingClient = new();
     private ClientMeasurements editingMeasurements = new();
-
     private bool isValid => !string.IsNullOrWhiteSpace(editingClient.Name);
 
     protected override async Task OnInitializedAsync()
     {
         clients = await ClientService.GetClientsAsync();
+    }
+
+    private void SelectedItemsChanged(HashSet<ClientInfo> selectedItems)
+    {
+        selectedClients = selectedItems;
+        StateHasChanged();
+    }
+
+
+
+    private async Task GenerateRandomClients()
+
+    {
+
+        await ClientService.GenerateRandomClientsAsync(5); // generates 5 random clients
+
+        clients = await ClientService.GetClientsAsync();
+
+        StateHasChanged();
+
+    }
+
+
+
+    private async Task DeleteSelectedClients()
+    {
+        foreach (var client in selectedClients)
+        {
+            await ClientService.DeleteClientAsync(client.Id);
+        }
+
+        clients = await ClientService.GetClientsAsync();
+        selectedClients.Clear();
+
+        StateHasChanged();
+
     }
 
     private void ToggleForm()
@@ -147,14 +205,159 @@
         clients = await ClientService.GetClientsAsync(); // Refresh list after delete
     }
 
-    private void SelectedItemsChanged(HashSet<ClientInfo> selectedItems)
-    {
-        _selectedItems = selectedItems;
-    }
 
     private bool FilterClients(ClientInfo client)
     {
         return string.IsNullOrWhiteSpace(_quickFilter) ||
                client.Name.Contains(_quickFilter, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private async Task DownloadAllClientsCSV()
+
+    {
+
+        var allClients = await ClientService.GetClientsAsync(); // Fetch all clients
+
+        var csvContent = new StringBuilder();
+
+
+
+        // CSV header - Add measurement fields
+
+        csvContent.AppendLine("Client Name,Phone,Date,Notes,Chest,Seat,Waist,Trouser,Half Back");
+
+
+
+        foreach (var client in allClients)
+
+        {
+
+            var measurement = client.Measurements?.FirstOrDefault(); // Get the first measurement (if exists)
+
+
+
+            csvContent.AppendLine($"{client.Name},{client.PhoneNumber},{client.Date},{client.Notes}," +
+
+                $"{(measurement?.A_ChestMeasurement.HasValue == true ? measurement.A_ChestMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.B_SeatMeasurement.HasValue == true ? measurement.B_SeatMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.C_WaistMeasurement.HasValue == true ? measurement.C_WaistMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.D_TrouserMeasurement.HasValue == true ? measurement.D_TrouserMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.E_F_HalfBackMeasurement.HasValue == true ? measurement.E_F_HalfBackMeasurement.Value.ToString() : "N/A")}");
+
+        }
+
+
+
+        await ExportCSVFile(csvContent.ToString(), "All_Clients_With_Measurements.csv");
+
+        StateHasChanged(); // 🔹 Force UI refresh to remove any overlays
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private async Task DownloadSelectedClientsCSV()
+
+    {
+
+        if (!selectedClients.Any()) return;
+
+
+
+        var csvContent = new StringBuilder();
+
+
+
+        // CSV header - Add measurement fields
+
+        csvContent.AppendLine("Client Name,Phone,Date,Notes,Chest,Seat,Waist,Trouser,Half Back");
+
+
+
+        foreach (var client in selectedClients)
+
+        {
+
+            var measurement = client.Measurements?.FirstOrDefault(); // Get the first measurement (if exists)
+
+
+
+            csvContent.AppendLine($"{client.Name},{client.PhoneNumber},{client.Date},{client.Notes}," +
+
+                $"{(measurement?.A_ChestMeasurement.HasValue == true ? measurement.A_ChestMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.B_SeatMeasurement.HasValue == true ? measurement.B_SeatMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.C_WaistMeasurement.HasValue == true ? measurement.C_WaistMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.D_TrouserMeasurement.HasValue == true ? measurement.D_TrouserMeasurement.Value.ToString() : "N/A")}," +
+
+                $"{(measurement?.E_F_HalfBackMeasurement.HasValue == true ? measurement.E_F_HalfBackMeasurement.Value.ToString() : "N/A")}");
+
+        }
+
+
+
+        await ExportCSVFile(csvContent.ToString(), "Selected_Clients_With_Measurements.csv");
+
+        StateHasChanged(); // 🔹 Force UI refresh to remove any overlays
+
+
+
+    }
+
+    // General function to trigger CSV file download
+
+    private async Task ExportCSVFile(string csvData, string filename)
+
+    {
+
+        var bytes = Encoding.UTF8.GetBytes(csvData);
+
+        await JS.InvokeVoidAsync("downloadFile", filename, "text/csv", Convert.ToBase64String(bytes));
+
+    }
+
 }

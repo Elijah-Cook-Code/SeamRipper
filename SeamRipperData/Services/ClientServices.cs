@@ -16,8 +16,9 @@ namespace SeamRipperData.Services
 
         public async Task<List<ClientInfo>> GetClientsAsync()
         {
-            return await _clientRepository.GetClientsAsync();
+            return await _clientRepository.GetClientsWithMeasurementsAsync(); // Ensure it fetches measurements
         }
+
 
         public async Task<ClientInfo?> GetClientWithMeasurementsAsync(int clientId)
         {
@@ -45,7 +46,7 @@ namespace SeamRipperData.Services
                 client.Name = newName;
                 client.Notes = newNotes;
 
-                if (client.Measurements == null || !client.Measurements.Any())
+                if (client.Measurements == null || client.Measurements.Count == 0)
                 {
                     client.Measurements = new List<ClientMeasurements> { newMeasurements };
                 }
@@ -69,6 +70,71 @@ namespace SeamRipperData.Services
                 await _clientRepository.UpdateClientAsync(client);
             }
         }
+
+        public async Task GenerateRandomClientsAsync(int numberOfClients = 5)
+        {
+            var existingClients = await _clientRepository.GetClientsAsync();
+
+            var newClients = new List<ClientInfo>();
+
+            var firstNames = new[] { "Alex", "Jordan", "Taylor", "Sam", "Morgan", "Charlie", "Casey" };
+            var lastNames = new[] { "Smith", "Johnson", "Lee", "Garcia", "Martinez", "Brown", "Williams" };
+
+            for (int i = 0; i < numberOfClients; i++)
+            {
+                string randomName;
+                int attempts = 0;
+                do
+                {
+                    randomName = $"{firstNames[Random.Shared.Next(firstNames.Length)]} {lastNames[Random.Shared.Next(lastNames.Length)]}";
+                    attempts++;
+                }
+                while (existingClients.Any(c => c.Name.Equals(randomName, StringComparison.OrdinalIgnoreCase)) && attempts < 5);
+
+                if (attempts >= 5)
+                    continue; // clearly avoid infinite loop
+
+                var client = new ClientInfo
+                {
+                    Name = randomName,
+                    Notes = "Auto-generated client",
+                    Date = DateTime.UtcNow,
+                    Measurements =
+                    [
+                        new ClientMeasurements
+                {
+                    A_ChestMeasurement = Random.Shared.Next(32, 50),
+                    C_WaistMeasurement = Random.Shared.Next(28, 40),
+                    D_TrouserMeasurement = Random.Shared.Next(30, 45),
+                    B_SeatMeasurement = Random.Shared.Next(30, 45),
+                    E_F_HalfBackMeasurement = Random.Shared.Next(12, 18),
+                }
+                    ]
+                };
+
+                newClients.Add(client);
+            }
+
+            foreach (var client in newClients)
+                await _clientRepository.AddClientAsync(client);
+        }
+
+        public async Task ClearClientMeasurementAsync(int measurementId)
+        {
+            var measurement = await _clientRepository.GetMeasurementByIdAsync(measurementId);
+            if (measurement is not null)
+            {
+                measurement.A_ChestMeasurement = 0;
+                measurement.B_SeatMeasurement = 0;
+                measurement.C_WaistMeasurement = 0;
+                measurement.D_TrouserMeasurement = 0;
+                measurement.E_F_HalfBackMeasurement = 0;
+                // Reset other measurements clearly if needed
+
+                await _clientRepository.UpdateClientMeasurementAsync(measurement);
+            }
+        }
+
 
         public async Task DeleteClientAsync(int clientId)
         {

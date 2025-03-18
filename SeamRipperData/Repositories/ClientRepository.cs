@@ -59,6 +59,22 @@ namespace SeamRipperData.Repositories
             return await _context.Measurements.Where(m => m.ClientId == clientId).ToListAsync();
         }
 
+        public async Task<List<ClientInfo>> GetClientsWithMeasurementsAsync()
+        {
+            return await _context.Clients
+                .Include(c => c.Measurements) // Ensures measurements are loaded
+                .ToListAsync();
+        }
+
+
+        public async Task<ClientMeasurements?> GetMeasurementByIdAsync(int measurementId)
+        {
+            return await _context.Measurements
+                .Include(m => m.Client) // clearly include Client to avoid null references
+                .FirstOrDefaultAsync(m => m.Id == measurementId);
+        }
+
+
         // Add a new measurement record
         public async Task AddClientMeasurementAsync(ClientMeasurements measurement)
         {

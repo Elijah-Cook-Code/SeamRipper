@@ -18,8 +18,13 @@ namespace SeamRipperData.Repositories
         // Client Measurements Management
         Task<List<ClientMeasurements>> GetClientMeasurementsAsync();
         Task<List<ClientMeasurements>> GetMeasurementsByClientIdAsync(int clientId);
+        Task<ClientMeasurements?> GetMeasurementByIdAsync(int measurementId);
+
         Task AddClientMeasurementAsync(ClientMeasurements measurement);
         Task UpdateClientMeasurementAsync(ClientMeasurements measurement);
         Task DeleteClientMeasurementAsync(int measurementId);
+
+        Task<List<ClientInfo>> GetClientsWithMeasurementsAsync();
+
     }
 }

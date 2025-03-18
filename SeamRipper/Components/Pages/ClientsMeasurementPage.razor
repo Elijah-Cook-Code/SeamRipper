@@ -3,6 +3,8 @@
 @using MudBlazor.Components
 @using SeamRipperData
 @inject SeamRipperData.Services.ClientServices ClientService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 
 <MudContainer>
@@ -27,7 +29,7 @@
                          Hideable="true" SelectedItemsChanged="SelectedItemsChanged" Dense="true" Hover="true">
                 <Columns>
                     <SelectColumn T="ClientMeasurements" />
-                    <PropertyColumn Property="x => x.Client.Name" Title="Client Name" />
+                    <PropertyColumn Property="x => x.Client.Name" Title="Name" />
                     <PropertyColumn Property="x => x.A_ChestMeasurement" Title="Chest" />
                     <PropertyColumn Property="x => x.B_SeatMeasurement" Title="Seat" />
                     <PropertyColumn Property="x => x.C_WaistMeasurement" Title="Waist" />
@@ -40,7 +42,7 @@
                             <MudButton Color="Color.Primary" OnClick="@(() => EditMeasurement(context.Item))">
                                 <MudIcon Icon="@Icons.Material.Filled.Edit" />
                             </MudButton>
-                            <MudButton Color="Color.Error" OnClick="@(() => DeleteMeasurement(context.Item.Id))">
+                            <MudButton Color="Color.Error" OnClick="@(() => ClearMeasurement(context.Item.Id))">
                                 <MudIcon Icon="@Icons.Material.Filled.Delete" />
                             </MudButton>
                         </CellTemplate>
@@ -50,6 +52,14 @@
                     <MudDataGridPager T="ClientMeasurements" />
                 </PagerContent>
             </MudDataGrid>
+            <MudButton Color="Color.Dark" Variant="Variant.Filled" OnClick="@ClearSelectedMeasurements" Disabled="@(!selectedMeasurements.Any())">
+                Delete Selected Measurements (@selectedMeasurements.Count)
+            </MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@DeleteSelectedClients" Disabled="@(!selectedMeasurements.Any())">
+                Delete Selected Clients (@selectedMeasurements.Select(m => m.ClientId).Distinct().Count())
+            </MudButton>
+
+
         </MudCardContent>
 
         <!-- Add/Edit Form Section (Inside the same card) -->
@@ -83,8 +93,7 @@
     private bool showForm = false;
     private bool isValid = true;
     private string? _quickFilter;
-
-
+    private HashSet<ClientMeasurements> selectedMeasurements = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,6 +116,72 @@
     {
         editingMeasurement = measurement;
         showForm = true;
+    }
+
+
+
+    private async Task ClearMeasurement(int measurementId)
+    {
+
+        bool confirmed = (await DialogService.ShowMessageBox(
+
+        "Confirm Clear",
+
+        $"Are you sure you want to clear  measurements?",
+
+        yesText: "Yes",
+
+        cancelText: "Cancel")) ?? false;
+
+        if (!confirmed)
+            return;
+
+        foreach (var measurement in selectedMeasurements)
+        {
+            await ClientService.ClearClientMeasurementAsync(measurement.Id);
+        }
+
+        await ClientService.ClearClientMeasurementAsync(measurementId);
+        measurements = await ClientService.GetClientMeasurementsAsync();
+
+        Snackbar.Add("Measurement cleared successfully!", Severity.Success);
+
+        StateHasChanged();
+    }
+
+    private void SelectedItemsChanged(HashSet<ClientMeasurements> selectedItems)
+    {
+        selectedMeasurements = selectedItems;
+        StateHasChanged();
+    }
+    private async Task DeleteSelectedClients()
+    {
+        if (selectedMeasurements.Any())
+        {
+            var distinctClientIds = selectedMeasurements
+                                    .Select(m => m.ClientId)
+                                    .Distinct();
+            foreach (var clientId in distinctClientIds)
+            {
+                await ClientService.DeleteClientAsync(clientId);
+            }
+            // Refresh your measurements data
+            measurements = await ClientService.GetClientMeasurementsAsync();
+            selectedMeasurements.Clear();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearSelectedMeasurements()
+    {
+        foreach (var measurement in selectedMeasurements)
+        {
+            await ClientService.ClearClientMeasurementAsync(measurement.Id);
+        }
+
+        measurements = await ClientService.GetClientMeasurementsAsync(); // reload measurements clearly
+        selectedMeasurements.Clear(); // clear selections explicitly
+        StateHasChanged(); // update UI immediately
     }
 
     private async Task SaveMeasurement()
@@ -132,18 +207,15 @@
     }
 
     private bool FilterMeasurements(ClientMeasurements measurement)
+
     {
+
         if (string.IsNullOrWhiteSpace(_quickFilter))
 
             return true;
 
-        return measurement.Client.Name.Contains(_quickFilter, StringComparison.OrdinalIgnoreCase) ||
-
-               measurement.A_ChestMeasurement.ToString().Contains(_quickFilter);
+        return measurement.Client?.Name?.Contains(_quickFilter, StringComparison.OrdinalIgnoreCase) == true
+            || measurement.A_ChestMeasurement.ToString().Contains(_quickFilter);
     }
 
-    private void SelectedItemsChanged(HashSet<ClientMeasurements> selected)
-    {
-        // Handle selection if needed
-    }
 }
