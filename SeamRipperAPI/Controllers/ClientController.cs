@@ -1,20 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SeamRipperData.Repositories;
 using SeamRipperData.Models;
-using SeamRipperAPI.Dtos;
+using SeamRipperData.Dtos;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace SideSeams.API.Controllers
+namespace SeamRipperAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class ClientController : ControllerBase
+    [Route("api/clients")]
+    public class ClientsController : ControllerBase
+
     {
         private readonly IClientRepository _clientRepository;
 
-        public ClientController(IClientRepository clientRepository)
+        public ClientsController(IClientRepository clientRepository)
         {
             _clientRepository = clientRepository;
         }
@@ -90,6 +91,7 @@ namespace SideSeams.API.Controllers
             return Ok(clientDtos);
         }
 
+
         // ✅ Add Client
         [HttpPost]
         public async Task<ActionResult<ClientInfoDto>> AddClient(ClientInfoDto clientDto)
@@ -97,13 +99,12 @@ namespace SideSeams.API.Controllers
             var client = new ClientInfo
             {
                 Name = clientDto.Name,
-                Date = clientDto.Date,
+                Date = clientDto.Date == default ? DateTime.Now : clientDto.Date,
                 Notes = clientDto.Notes,
                 PhoneNumber = clientDto.PhoneNumber,
                 Measurements = clientDto.Measurements.Select(m => new ClientMeasurements
                 {
-                    ClientId = clientDto.Id,
-                    A_ChestMeasurement = (int?)m.A_ChestMeasurement, // Convert double? → int?
+                    A_ChestMeasurement = (int?)m.A_ChestMeasurement,
                     B_SeatMeasurement = (int?)m.B_SeatMeasurement,
                     C_WaistMeasurement = (int?)m.C_WaistMeasurement,
                     D_TrouserMeasurement = (int?)m.D_TrouserMeasurement,
@@ -118,71 +119,69 @@ namespace SideSeams.API.Controllers
                 }).ToList()
             };
 
-            await _clientRepository.AddClientAsync(client); // ✅ No need to call SaveChangesAsync
+            await _clientRepository.AddClientAsync(client);
 
-            return CreatedAtAction(nameof(GetClientById), new { id = client.Id }, clientDto);
+            var resultDto = new ClientInfoDto
+            {
+                Id = client.Id,
+                Name = client.Name,
+                PhoneNumber = client.PhoneNumber,
+                Notes = client.Notes,
+                Date = client.Date,
+                Measurements = client.Measurements.Select(m => new MeasurementsDto
+                {
+                    A_ChestMeasurement = m.A_ChestMeasurement,
+                    B_SeatMeasurement = m.B_SeatMeasurement,
+                    C_WaistMeasurement = m.C_WaistMeasurement,
+                    D_TrouserMeasurement = m.D_TrouserMeasurement,
+                    E_F_HalfBackMeasurement = m.E_F_HalfBackMeasurement,
+                    G_H_BackNeckToWaistMeasurement = m.G_H_BackNeckToWaistMeasurement,
+                    G_I_SyceDepthMeasurement = m.G_I_SyceDepthMeasurement,
+                    I_L_SleeveLengthOnePieceMeasurement = m.I_L_SleeveLengthOnePieceMeasurement,
+                    E_I_SleeveLengthTwoPieceMeasurement = m.E_I_SleeveLengthTwoPieceMeasurement,
+                    N_InsideLegMeasurement = m.N_InsideLegMeasurement,
+                    P_Q_BodyRiseMeasurement = m.P_Q_BodyRiseMeasurement,
+                    R_CloseWristMeasurement = m.R_CloseWristMeasurement
+                }).ToList()
+            };
+
+            return CreatedAtAction(nameof(GetClientById), new { id = client.Id }, resultDto);
         }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateClient(int id, ClientInfoDto clientDto)
         {
-            var existingClient = await _clientRepository.GetClientByIdAsync(id);
-            if (existingClient == null) return NotFound();
-
-            // Update client properties
-            existingClient.Name = clientDto.Name;
-            existingClient.Date = clientDto.Date;
-            existingClient.Notes = clientDto.Notes;
-            existingClient.PhoneNumber = clientDto.PhoneNumber;
-
-            // Update Measurements
-            var existingMeasurements = existingClient.Measurements.ToList();
-
-            foreach (var measurementDto in clientDto.Measurements)
+            var updatedClient = new ClientInfo
             {
-                var existingMeasurement = existingMeasurements.FirstOrDefault(m => m.Id == measurementDto.Id);
-
-                if (existingMeasurement != null)
+                Id = id,
+                Name = clientDto.Name,
+                PhoneNumber = clientDto.PhoneNumber,
+                Notes = clientDto.Notes,
+                Date = clientDto.Date,
+                Measurements = clientDto.Measurements?.Select(m => new ClientMeasurements
                 {
-                    // Update existing measurement
-                    existingMeasurement.A_ChestMeasurement = (int?)measurementDto.A_ChestMeasurement;
-                    existingMeasurement.B_SeatMeasurement = (int?)measurementDto.B_SeatMeasurement;
-                    existingMeasurement.C_WaistMeasurement = (int?)measurementDto.C_WaistMeasurement;
-                    existingMeasurement.D_TrouserMeasurement = (int?)measurementDto.D_TrouserMeasurement;
-                    existingMeasurement.E_F_HalfBackMeasurement = (int?)measurementDto.E_F_HalfBackMeasurement;
-                    existingMeasurement.G_H_BackNeckToWaistMeasurement = (int?)measurementDto.G_H_BackNeckToWaistMeasurement;
-                    existingMeasurement.G_I_SyceDepthMeasurement = (int?)measurementDto.G_I_SyceDepthMeasurement;
-                    existingMeasurement.I_L_SleeveLengthOnePieceMeasurement = (int?)measurementDto.I_L_SleeveLengthOnePieceMeasurement;
-                    existingMeasurement.E_I_SleeveLengthTwoPieceMeasurement = (int?)measurementDto.E_I_SleeveLengthTwoPieceMeasurement;
-                    existingMeasurement.N_InsideLegMeasurement = (int?)measurementDto.N_InsideLegMeasurement;
-                    existingMeasurement.P_Q_BodyRiseMeasurement = (int?)measurementDto.P_Q_BodyRiseMeasurement;
-                    existingMeasurement.R_CloseWristMeasurement = (int?)measurementDto.R_CloseWristMeasurement;
-                }
-                else
-                {
-                    // Add new measurement if it doesn't exist
-                    existingClient.Measurements.Add(new ClientMeasurements
-                    {
-                        ClientId = id,
-                        A_ChestMeasurement = (int?)measurementDto.A_ChestMeasurement,
-                        B_SeatMeasurement = (int?)measurementDto.B_SeatMeasurement,
-                        C_WaistMeasurement = (int?)measurementDto.C_WaistMeasurement,
-                        D_TrouserMeasurement = (int?)measurementDto.D_TrouserMeasurement,
-                        E_F_HalfBackMeasurement = (int?)measurementDto.E_F_HalfBackMeasurement,
-                        G_H_BackNeckToWaistMeasurement = (int?)measurementDto.G_H_BackNeckToWaistMeasurement,
-                        G_I_SyceDepthMeasurement = (int?)measurementDto.G_I_SyceDepthMeasurement,
-                        I_L_SleeveLengthOnePieceMeasurement = (int?)measurementDto.I_L_SleeveLengthOnePieceMeasurement,
-                        E_I_SleeveLengthTwoPieceMeasurement = (int?)measurementDto.E_I_SleeveLengthTwoPieceMeasurement,
-                        N_InsideLegMeasurement = (int?)measurementDto.N_InsideLegMeasurement,
-                        P_Q_BodyRiseMeasurement = (int?)measurementDto.P_Q_BodyRiseMeasurement,
-                        R_CloseWristMeasurement = (int?)measurementDto.R_CloseWristMeasurement
-                    });
-                }
-            }
+                    Id = m.Id,
+                    ClientId = id,
+                    A_ChestMeasurement = (int?)m.A_ChestMeasurement,
+                    B_SeatMeasurement = (int?)m.B_SeatMeasurement,
+                    C_WaistMeasurement = (int?)m.C_WaistMeasurement,
+                    D_TrouserMeasurement = (int?)m.D_TrouserMeasurement,
+                    E_F_HalfBackMeasurement = (int?)m.E_F_HalfBackMeasurement,
+                    G_H_BackNeckToWaistMeasurement = (int?)m.G_H_BackNeckToWaistMeasurement,
+                    G_I_SyceDepthMeasurement = (int?)m.G_I_SyceDepthMeasurement,
+                    I_L_SleeveLengthOnePieceMeasurement = (int?)m.I_L_SleeveLengthOnePieceMeasurement,
+                    E_I_SleeveLengthTwoPieceMeasurement = (int?)m.E_I_SleeveLengthTwoPieceMeasurement,
+                    N_InsideLegMeasurement = (int?)m.N_InsideLegMeasurement,
+                    P_Q_BodyRiseMeasurement = (int?)m.P_Q_BodyRiseMeasurement,
+                    R_CloseWristMeasurement = (int?)m.R_CloseWristMeasurement
+                }).ToList()
+            };
 
-            await _clientRepository.UpdateClientAsync(existingClient);
+            await _clientRepository.UpdateClientAsync(updatedClient);
             return NoContent();
         }
+
 
 
         // ✅ Delete Client

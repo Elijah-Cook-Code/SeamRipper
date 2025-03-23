@@ -28,7 +28,9 @@ namespace SeamRipper
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
-            builder.Services.AddMauiBlazorWebView();       
+            builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5047/") });
+
             builder.Services.AddMudServices(); // ✅ Add MudBlazor Services
 
 

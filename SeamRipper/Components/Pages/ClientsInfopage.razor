@@ -4,6 +4,9 @@
 @inject SeamRipperData.Services.ClientServices ClientService
 @inject IJSRuntime JS
 @using System.Text
+@inject HttpClient Http
+@using SeamRipperData.Dtos;
+
 
 <MudContainer>
     <MudCard Elevation="4">
@@ -75,7 +78,7 @@
         <!-- Add/Edit Form Section (Inside the same card) -->
         <MudCollapse Expanded="showForm">
             <MudCardContent>
-                <MudForm Model="editingClient" IsValid="@isValid">
+                <MudForm @ref="form" Model="editingClient">
                     <MudTextField Label="Name" @bind-Value="editingClient.Name" Required="true" />
                     <MudTextField Label="Phone Number" @bind-Value="editingClient.PhoneNumber" />
                     <MudTextField Label="Notes" @bind-Value="editingClient.Notes" />
@@ -94,17 +97,20 @@
                     <MudTextField Label="Body Rise" @bind-Value="editingMeasurements.P_Q_BodyRiseMeasurement" InputType="InputType.Number" />
                     <MudTextField Label="Close Wrist" @bind-Value="editingMeasurements.R_CloseWristMeasurement" InputType="InputType.Number" />
 
-
-                    <MudAlert Severity="Severity.Error" Dense="true" Show="@(!isValid)">
+                    <MudAlert Severity="Severity.Error" Dense="true" Show="@(!form.IsValid)">
                         Please fill in required fields.
                     </MudAlert>
+
+                    <MudCardActions>
+                        <MudButton Color="Color.Primary" Type="Button" OnClick="SaveClient">Save</MudButton>
+                        <MudButton Color="Color.Secondary" OnClick="ToggleForm">Cancel</MudButton>
+                    </MudCardActions>
                 </MudForm>
+
             </MudCardContent>
 
-            <MudCardActions>
-                <MudButton Color="Color.Primary" OnClick="SaveClient" Disabled="!isValid">Save</MudButton>
-                <MudButton Color="Color.Secondary" OnClick="ToggleForm">Cancel</MudButton>
-            </MudCardActions>
+            
+            
         </MudCollapse>
     </MudCard>
 
@@ -112,6 +118,7 @@
 </MudContainer>
 
 @code {
+    private MudForm form;
     private List<ClientInfo> clients = new();
     private string _quickFilter = "";
     private HashSet<ClientInfo> selectedClients = new();
@@ -167,7 +174,7 @@
         showForm = !showForm;
         if (!showForm) ResetForm();
     }
-    
+
     private void ResetForm()
     {
         editingClient = new();
@@ -183,22 +190,62 @@
 
     private async Task SaveClient()
     {
-        if (isValid)
+        await JS.InvokeVoidAsync("alert", "⏺ SaveClient called");
+
+        if (!isValid)
         {
-            if (editingClient.Id == 0)
+            await JS.InvokeVoidAsync("alert", "⚠️ Form is not valid.");
+            return;
+        }
+
+        if (editingClient.Id == 0)
+        {
+            // 🧵 Link the measurement from the form
+            editingClient.Measurements = new List<ClientMeasurements> { editingMeasurements };
+
+            var newClientDto = ClientService.MapClientToDto(editingClient);
+            var response = await Http.PostAsJsonAsync("api/clients", newClientDto);
+
+            if (!response.IsSuccessStatusCode)
             {
-                // Add new client
-                await ClientService.AddClientAsync(editingClient.Name, editingClient.PhoneNumber, editingClient.Notes, new List<ClientMeasurements> { editingMeasurements });
+                await JS.InvokeVoidAsync("alert", "❌ Failed to save client to API.");
+                return;
             }
+
             else
             {
-                // Update existing client
-                await ClientService.UpdateClientAsync(editingClient.Id, editingClient.Name, editingClient.Notes, editingMeasurements);
+                await JS.InvokeVoidAsync("alert", "✅ Client saved successfully!");
             }
-            clients = await ClientService.GetClientsAsync();
-            ToggleForm();
         }
+
+        else
+        {
+            editingClient.Measurements = new List<ClientMeasurements> { editingMeasurements };
+
+            var updatedDto = ClientService.MapClientToDto(editingClient);
+            var response = await Http.PutAsJsonAsync($"api/clients/{updatedDto.Id}", updatedDto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "❌ Failed to update client via API.");
+                return;
+            }
+
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "✅ Client updated successfully!");
+            }
+        }
+
+        // 🔄 Refresh the local data
+        var clientDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+
+        clients = ClientService.MapDtosToClients(clientDtos);
+
+        ToggleForm();
+
     }
+
 
     private async Task DeleteClient(ClientInfo client)
     {

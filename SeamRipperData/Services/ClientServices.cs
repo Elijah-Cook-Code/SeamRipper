@@ -3,6 +3,7 @@ using SeamRipperData.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Numerics;
+using SeamRipperData.Dtos;
 
 namespace SeamRipperData.Services
 {
@@ -151,6 +152,64 @@ namespace SeamRipperData.Services
             }
         }
 
+        
+            public List<ClientInfo> MapDtosToClients(List<ClientInfoDto> dtos)
+            {
+                return dtos.Select(dto => new ClientInfo
+                {
+                    Id = dto.Id,
+                    Name = dto.Name,
+                    PhoneNumber = dto.PhoneNumber,
+                    Date = dto.Date,
+                    Notes = dto.Notes,
+                    Measurements = dto.Measurements?.Select(m => new ClientMeasurements
+                    {
+                        A_ChestMeasurement = (int?)m.A_ChestMeasurement,
+                        B_SeatMeasurement = (int?)m.B_SeatMeasurement,
+                        C_WaistMeasurement = (int?)m.C_WaistMeasurement,
+                        D_TrouserMeasurement = (int?)m.D_TrouserMeasurement,
+                        E_F_HalfBackMeasurement = (int?)m.E_F_HalfBackMeasurement,
+                        G_H_BackNeckToWaistMeasurement = (int?)m.G_H_BackNeckToWaistMeasurement,
+                        G_I_SyceDepthMeasurement = (int?)m.G_I_SyceDepthMeasurement,
+                        I_L_SleeveLengthOnePieceMeasurement = (int?)m.I_L_SleeveLengthOnePieceMeasurement,
+                        E_I_SleeveLengthTwoPieceMeasurement = (int?)m.E_I_SleeveLengthTwoPieceMeasurement,
+                        N_InsideLegMeasurement = (int?)m.N_InsideLegMeasurement,
+                        P_Q_BodyRiseMeasurement = (int?)m.P_Q_BodyRiseMeasurement,
+                        R_CloseWristMeasurement = (int?)m.R_CloseWristMeasurement
+                    }).ToList() ?? new List<ClientMeasurements>()
+                }).ToList();
+            }
+
+           
+        
+        public ClientInfoDto MapClientToDto(ClientInfo client)
+        {
+            return new ClientInfoDto
+            {
+                Id = client.Id,
+                Name = client.Name,
+                PhoneNumber = client.PhoneNumber,
+                Notes = client.Notes,
+                Date = client.Date,
+                Measurements = client.Measurements?.Select(m => new MeasurementsDto
+                {
+                    Id = m.Id,
+                    ClientId = client.Id,
+                    A_ChestMeasurement = m.A_ChestMeasurement,
+                    B_SeatMeasurement = m.B_SeatMeasurement,
+                    C_WaistMeasurement = m.C_WaistMeasurement,
+                    D_TrouserMeasurement = m.D_TrouserMeasurement,
+                    E_F_HalfBackMeasurement = m.E_F_HalfBackMeasurement,
+                    G_H_BackNeckToWaistMeasurement = m.G_H_BackNeckToWaistMeasurement,
+                    G_I_SyceDepthMeasurement = m.G_I_SyceDepthMeasurement,
+                    I_L_SleeveLengthOnePieceMeasurement = m.I_L_SleeveLengthOnePieceMeasurement,
+                    E_I_SleeveLengthTwoPieceMeasurement = m.E_I_SleeveLengthTwoPieceMeasurement,
+                    N_InsideLegMeasurement = m.N_InsideLegMeasurement,
+                    P_Q_BodyRiseMeasurement = m.P_Q_BodyRiseMeasurement,
+                    R_CloseWristMeasurement = m.R_CloseWristMeasurement
+                }).ToList() ?? new List<MeasurementsDto>()
+            };
+        }
 
         public async Task DeleteClientAsync(int clientId)
         {

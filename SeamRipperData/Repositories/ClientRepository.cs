@@ -31,11 +31,29 @@ namespace SeamRipperData.Repositories
             _context.Clients.Add(client);
             await _context.SaveChangesAsync();
         }
-        public async Task UpdateClientAsync(ClientInfo client)
+        public async Task UpdateClientAsync(ClientInfo updatedClient)
         {
-            _context.Clients.Update(client);
+            var existing = await _context.Clients
+                .Include(c => c.Measurements)
+                .FirstOrDefaultAsync(c => c.Id == updatedClient.Id);
+
+            if (existing == null) return;
+
+            // Update base info
+            existing.Name = updatedClient.Name;
+            existing.PhoneNumber = updatedClient.PhoneNumber;
+            existing.Notes = updatedClient.Notes;
+            existing.Date = updatedClient.Date;
+
+            // Remove existing measurements
+            _context.Measurements.RemoveRange(existing.Measurements);
+
+            // Add new measurements
+            existing.Measurements = updatedClient.Measurements;
+
             await _context.SaveChangesAsync();
         }
+
         public async Task DeleteClientAsync(int clientId)
         {
             var client = await _context.Clients.Include(c => c.Measurements)

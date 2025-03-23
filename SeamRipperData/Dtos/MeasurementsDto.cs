@@ -1,4 +1,4 @@
-﻿namespace SeamRipperAPI.Dtos
+﻿namespace SeamRipperData.Dtos
 {
     public class MeasurementsDto
     {
