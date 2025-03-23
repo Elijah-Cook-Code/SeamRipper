@@ -7,6 +7,9 @@ using SeamRipperData.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using SeamRipperData.Connections;
+using MudBlazor;
+using MudBlazor.Extensions;
+
 
 
 
@@ -25,7 +28,7 @@ namespace SeamRipper
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
-            builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddMauiBlazorWebView();       
             builder.Services.AddMudServices(); // ✅ Add MudBlazor Services
 
 

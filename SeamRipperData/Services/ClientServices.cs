@@ -2,6 +2,7 @@
 using SeamRipperData.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Numerics;
 
 namespace SeamRipperData.Services
 {
@@ -25,11 +26,12 @@ namespace SeamRipperData.Services
             return await _clientRepository.GetClientByIdAsync(clientId);
         }
 
-        public async Task AddClientAsync(string name, string notes, List<ClientMeasurements> measurements)
+        public async Task AddClientAsync(string name, string phone, string notes, List<ClientMeasurements> measurements)
         {
             var newClient = new ClientInfo
             {
                 Name = name,
+                PhoneNumber = phone, // ✅ make sure this is here
                 Notes = notes,
                 Date = DateTime.UtcNow,
                 Measurements = measurements
@@ -45,6 +47,7 @@ namespace SeamRipperData.Services
             {
                 client.Name = newName;
                 client.Notes = newNotes;
+
 
                 if (client.Measurements == null || client.Measurements.Count == 0)
                 {
@@ -108,6 +111,13 @@ namespace SeamRipperData.Services
                     D_TrouserMeasurement = Random.Shared.Next(30, 45),
                     B_SeatMeasurement = Random.Shared.Next(30, 45),
                     E_F_HalfBackMeasurement = Random.Shared.Next(12, 18),
+                    G_H_BackNeckToWaistMeasurement = Random.Shared.Next(15, 25),
+                    G_I_SyceDepthMeasurement = Random.Shared.Next(6, 10),
+                    I_L_SleeveLengthOnePieceMeasurement = Random.Shared.Next(20, 30),
+                    E_I_SleeveLengthTwoPieceMeasurement = Random.Shared.Next(20, 30),
+                    N_InsideLegMeasurement = Random.Shared.Next(28, 36),
+                    P_Q_BodyRiseMeasurement = Random.Shared.Next(8, 14),
+                    R_CloseWristMeasurement = Random.Shared.Next(6, 10)
                 }
                     ]
                 };
@@ -129,9 +139,15 @@ namespace SeamRipperData.Services
                 measurement.C_WaistMeasurement = 0;
                 measurement.D_TrouserMeasurement = 0;
                 measurement.E_F_HalfBackMeasurement = 0;
-                // Reset other measurements clearly if needed
+                measurement.G_H_BackNeckToWaistMeasurement = 0;
+                measurement.G_I_SyceDepthMeasurement = 0;
+                measurement.I_L_SleeveLengthOnePieceMeasurement = 0;
+                measurement.E_I_SleeveLengthTwoPieceMeasurement = 0;
+                measurement.N_InsideLegMeasurement = 0;
+                measurement.P_Q_BodyRiseMeasurement = 0;
+                measurement.R_CloseWristMeasurement = 0;
 
-                await _clientRepository.UpdateClientMeasurementAsync(measurement);
+        await _clientRepository.UpdateClientMeasurementAsync(measurement);
             }
         }
 

@@ -20,6 +20,6 @@ namespace SeamRipperData.Models
         public string PhoneNumber { get; set; } = "";
 
 
-        public List<ClientMeasurements> Measurements { get; set; } = new List<ClientMeasurements>();
+        public ICollection<ClientMeasurements> Measurements { get; set; } = new List<ClientMeasurements>();
     }
 }

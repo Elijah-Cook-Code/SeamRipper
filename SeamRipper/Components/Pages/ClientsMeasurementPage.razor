@@ -5,73 +5,121 @@
 @inject SeamRipperData.Services.ClientServices ClientService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IJSRuntime JS
+@using System.Text
 
-
-<MudContainer>
-    <MudCard Elevation="4">
+<MudContainer MaxWidth="MaxWidth.False" Style="width: 100%;">
+    <MudCard Elevation="4" Style="width: 100%;">
         <!-- Card Header with Search & Add Measurement Button -->
         <MudCardHeader>
             <MudText Typo="Typo.h6">Client Measurements</MudText>
             <MudSpacer />
-            <MudTextField @bind-Value="_quickFilter" Placeholder="Search Measurements..."
+            <MudTextField @bind-Value="_quickFilter" Placeholder="Search Measurements By Name..."
                           Adornment="Adornment.Start" Immediate="true"
                           AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0">
             </MudTextField>
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ToggleForm">
-                @(showForm ? "Cancel" : "Add Measurement")
+                @(showForm ? "Cancel" : "Add Client")
             </MudButton>
         </MudCardHeader>
 
         <!-- DataGrid Section -->
         <MudCardContent>
-            <MudDataGrid T="ClientMeasurements" MultiSelection="true" Items="@measurements"
-                         SortMode="SortMode.Multiple" Filterable="true" QuickFilter="FilterMeasurements"
-                         Hideable="true" SelectedItemsChanged="SelectedItemsChanged" Dense="true" Hover="true">
-                <Columns>
-                    <SelectColumn T="ClientMeasurements" />
-                    <PropertyColumn Property="x => x.Client.Name" Title="Name" />
-                    <PropertyColumn Property="x => x.A_ChestMeasurement" Title="Chest" />
-                    <PropertyColumn Property="x => x.B_SeatMeasurement" Title="Seat" />
-                    <PropertyColumn Property="x => x.C_WaistMeasurement" Title="Waist" />
-                    <PropertyColumn Property="x => x.D_TrouserMeasurement" Title="Trouser" />
-                    <PropertyColumn Property="x => x.E_F_HalfBackMeasurement" Title="Half Back" />
+            
+                <MudDataGrid T="ClientMeasurements" MultiSelection="true" Items="@measurements"
+                             SortMode="SortMode.Multiple" Filterable="true" QuickFilter="FilterMeasurements"
+                             Hideable="true" SelectedItemsChanged="SelectedItemsChanged" Dense="true" Hover="true"
+                             Style="min-width: 1200px; width: 100%; table-layout: fixed;">
+                    <Columns>
+                        <SelectColumn T="ClientMeasurements" />
+                        <PropertyColumn Property="x => x.Client.Name" Title="Name" Width="150px" />
+                        <PropertyColumn Property="x => x.A_ChestMeasurement" Title="Chest" Width="100px" />
+                        <PropertyColumn Property="x => x.B_SeatMeasurement" Title="Seat" Width="100px" />
+                        <PropertyColumn Property="x => x.C_WaistMeasurement" Title="Waist" Width="100px" />
+                        <PropertyColumn Property="x => x.D_TrouserMeasurement" Title="Trouser" Width="100px" />
+                        <PropertyColumn Property="x => x.E_F_HalfBackMeasurement" Title="Half Back" Width="100px" />
+                        <PropertyColumn Property="x => x.G_H_BackNeckToWaistMeasurement" Title="Back→Waist" Width="120px" />
+                        <PropertyColumn Property="x => x.G_I_SyceDepthMeasurement" Title="Syce Depth" Width="120px" />
+                        <PropertyColumn Property="x => x.I_L_SleeveLengthOnePieceMeasurement" Title="Sleeve 1pc" Width="120px" />
+                        <PropertyColumn Property="x => x.E_I_SleeveLengthTwoPieceMeasurement" Title="Sleeve 2pc" Width="120px" />
+                        <PropertyColumn Property="x => x.N_InsideLegMeasurement" Title="Leg" Width="100px" />
+                        <PropertyColumn Property="x => x.P_Q_BodyRiseMeasurement" Title="Rise" Width="100px" />
+                        <PropertyColumn Property="x => x.R_CloseWristMeasurement" Title="Wrist" Width="100px" />
 
-                    <!-- Actions Column (Edit & Delete) -->
-                    <TemplateColumn Title="Actions">
-                        <CellTemplate Context="context">
-                            <MudButton Color="Color.Primary" OnClick="@(() => EditMeasurement(context.Item))">
-                                <MudIcon Icon="@Icons.Material.Filled.Edit" />
-                            </MudButton>
-                            <MudButton Color="Color.Error" OnClick="@(() => ClearMeasurement(context.Item.Id))">
-                                <MudIcon Icon="@Icons.Material.Filled.Delete" />
-                            </MudButton>
-                        </CellTemplate>
-                    </TemplateColumn>
-                </Columns>
-                <PagerContent>
-                    <MudDataGridPager T="ClientMeasurements" />
-                </PagerContent>
-            </MudDataGrid>
+                        <TemplateColumn Title="Actions" Width="120px">
+                            <CellTemplate Context="context">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <MudButton Color="Color.Primary" OnClick="@(() => EditMeasurement(context.Item))">
+                                    <MudIcon Icon="@Icons.Material.Filled.Edit" />
+                                </MudButton>
+                                <MudButton Color="Color.Error" OnClick="@(() => ClearMeasurement(context.Item.Id))">
+                                    <MudIcon Icon="@Icons.Material.Filled.Delete" />
+                                </MudButton>
+                            </div>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                    <PagerContent>
+                        <MudDataGridPager T="ClientMeasurements" />
+                    </PagerContent>
+                </MudDataGrid>
+            
             <MudButton Color="Color.Dark" Variant="Variant.Filled" OnClick="@ClearSelectedMeasurements" Disabled="@(!selectedMeasurements.Any())">
                 Delete Selected Measurements (@selectedMeasurements.Count)
             </MudButton>
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@DeleteSelectedClients" Disabled="@(!selectedMeasurements.Any())">
                 Delete Selected Clients (@selectedMeasurements.Select(m => m.ClientId).Distinct().Count())
             </MudButton>
+            <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="@GenerateRandomClients">
+                Generate Random Clients
+            </MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="async () => await DownloadAllClientsCSV()">
+                <MudIcon Icon="@Icons.Material.Filled.FileDownload" />
+                Export All as CSV
+            </MudButton>
+            <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="DownloadSelectedClientsCSV" Disabled="@(!selectedClients.Any())">
+                <MudIcon Icon="@Icons.Material.Filled.FileDownload" />
+                Export Selected as CSV (@selectedClients.Count)
+            </MudButton>
 
 
         </MudCardContent>
 
-        <!-- Add/Edit Form Section (Inside the same card) -->
+        <!-- Add/Edit Form Section -->
         <MudCollapse Expanded="showForm">
             <MudCardContent>
                 <MudForm Model="editingMeasurement" IsValid="@isValid">
-                    <MudTextField Label="Client ID" @bind-Value="editingMeasurement.ClientId" Required="true" />
+                    @if (editingClient.Id == 0)
+
+                    {
+                        <MudTextField Label="Name" @bind-Value="editingClient.Name" Required="true" />
+                        <MudTextField Label="Phone Number" @bind-Value="editingClient.PhoneNumber" />
+                        <MudTextField Label="Notes" @bind-Value="editingClient.Notes" />
+                    }
+
+                    else
+
+                    {
+                        <MudText Typo="Typo.subtitle1">Name: @editingClient.Name</MudText>
+                        <MudText Typo="Typo.subtitle1">Phone: @editingClient.PhoneNumber</MudText>
+                        <MudText Typo="Typo.subtitle1">Notes: @editingClient.Notes</MudText>
+                    }
+
+
+
+                    <MudText Typo="Typo.subtitle1">Measurements</MudText>
                     <MudTextField Label="Chest" @bind-Value="editingMeasurement.A_ChestMeasurement" InputType="InputType.Number" />
                     <MudTextField Label="Seat" @bind-Value="editingMeasurement.B_SeatMeasurement" InputType="InputType.Number" />
                     <MudTextField Label="Waist" @bind-Value="editingMeasurement.C_WaistMeasurement" InputType="InputType.Number" />
                     <MudTextField Label="Trouser" @bind-Value="editingMeasurement.D_TrouserMeasurement" InputType="InputType.Number" />
                     <MudTextField Label="Half Back" @bind-Value="editingMeasurement.E_F_HalfBackMeasurement" InputType="InputType.Number" />
+                    <MudTextField Label="BackNeck To Waist" @bind-Value="editingMeasurement.G_H_BackNeckToWaistMeasurement" InputType="InputType.Number" />
+                    <MudTextField Label="Syce Depth" @bind-Value="editingMeasurement.G_I_SyceDepthMeasurement" InputType="InputType.Number" />
+                    <MudTextField Label="Sleeve Length One Piece" @bind-Value="editingMeasurement.I_L_SleeveLengthOnePieceMeasurement" InputType="InputType.Number" />
+                    <MudTextField Label="Sleeve Length Two Piece" @bind-Value="editingMeasurement.E_I_SleeveLengthTwoPieceMeasurement" InputType="InputType.Number" />
+                    <MudTextField Label="Inside Leg" @bind-Value="editingMeasurement.N_InsideLegMeasurement" InputType="InputType.Number" />
+                    <MudTextField Label="Body Rise" @bind-Value="editingMeasurement.P_Q_BodyRiseMeasurement" InputType="InputType.Number" />
+                    <MudTextField Label="Close Wrist" @bind-Value="editingMeasurement.R_CloseWristMeasurement" InputType="InputType.Number" />
 
                     <MudAlert Severity="Severity.Error" Dense="true" Show="@(!isValid)">
                         Please fill in required fields.
@@ -80,7 +128,7 @@
             </MudCardContent>
 
             <MudCardActions>
-                <MudButton Color="Color.Primary" OnClick="SaveMeasurement" Disabled="!isValid">Save</MudButton>
+                <MudButton Color="Color.Primary" OnClick="SaveClient" Disabled="!isValid">Save</MudButton>
                 <MudButton Color="Color.Secondary" OnClick="ToggleForm">Cancel</MudButton>
             </MudCardActions>
         </MudCollapse>
@@ -89,11 +137,21 @@
 
 @code {
     private List<ClientMeasurements>? measurements;
-    private ClientMeasurements editingMeasurement = new ClientMeasurements();
+    private List<ClientInfo> clients = new();
+
+    private HashSet<ClientMeasurements> selectedMeasurements = new();
+    private HashSet<ClientInfo> selectedClients = new();
+    
+    private ClientInfo editingClient = new();
+    private ClientMeasurements editingMeasurement = new();
+
     private bool showForm = false;
     private bool isValid = true;
+
     private string? _quickFilter;
-    private HashSet<ClientMeasurements> selectedMeasurements = new();
+
+    
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,6 +159,7 @@
         {
             measurements = await ClientService.GetClientMeasurementsAsync();
         }
+
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching client measurements: {ex.Message}");
@@ -114,26 +173,41 @@
 
     private void EditMeasurement(ClientMeasurements measurement)
     {
+
         editingMeasurement = measurement;
+
+        editingClient = measurement.Client ?? new();
+
+        // Make sure the client has a Measurements list containing the current one
+
+        if (editingClient.Measurements == null)
+
+            editingClient.Measurements = new List<ClientMeasurements>();
+
+
+
+        if (!editingClient.Measurements.Contains(editingMeasurement))
+
+            editingClient.Measurements.Add(editingMeasurement);
+
+
+
         showForm = true;
+
     }
-
-
 
     private async Task ClearMeasurement(int measurementId)
     {
-
         bool confirmed = (await DialogService.ShowMessageBox(
+            "Confirm Clear",
+            $"Are you sure you want to clear measurements?",
 
-        "Confirm Clear",
+            yesText: "Yes",
 
-        $"Are you sure you want to clear  measurements?",
-
-        yesText: "Yes",
-
-        cancelText: "Cancel")) ?? false;
+            cancelText: "Cancel")) ?? false;
 
         if (!confirmed)
+
             return;
 
         foreach (var measurement in selectedMeasurements)
@@ -145,27 +219,140 @@
         measurements = await ClientService.GetClientMeasurementsAsync();
 
         Snackbar.Add("Measurement cleared successfully!", Severity.Success);
-
         StateHasChanged();
+    }
+
+    private async Task GenerateRandomClients()
+    {
+        await ClientService.GenerateRandomClientsAsync(5); // generates 5 random clients
+
+        measurements = await ClientService.GetClientMeasurementsAsync();
+        clients = await ClientService.GetClientsAsync();
+
+    }
+    
+    private async Task DownloadAllClientsCSV()
+    {
+        var allClients = await ClientService.GetClientsAsync(); // Fetch all clients
+        var csvContent = new StringBuilder();
+
+        // CSV header - Add measurement fields
+
+        csvContent.AppendLine(
+
+            "Client Name,Phone,Date,Notes," +
+            "Chest,Seat,Waist,Trouser,Half Back," +
+            "BackNeck To Waist,Syce Depth,Sleeve 1pc,Sleeve 2pc," +
+            "Inside Leg,Body Rise,Close Wrist"
+
+            );
+
+        foreach (var client in allClients)
+        {
+            var measurement = client.Measurements?.FirstOrDefault(); // Get the first measurement (if exists)
+
+            csvContent.AppendLine(
+
+                $"{client.Name},{client.PhoneNumber},{client.Date},{client.Notes}," +
+                $"{(measurement?.A_ChestMeasurement.HasValue == true ? measurement.A_ChestMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.B_SeatMeasurement.HasValue == true ? measurement.B_SeatMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.C_WaistMeasurement.HasValue == true ? measurement.C_WaistMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.D_TrouserMeasurement.HasValue == true ? measurement.D_TrouserMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.E_F_HalfBackMeasurement.HasValue == true ? measurement.E_F_HalfBackMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.G_H_BackNeckToWaistMeasurement.HasValue == true ? measurement.G_H_BackNeckToWaistMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.G_I_SyceDepthMeasurement.HasValue == true ? measurement.G_I_SyceDepthMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.I_L_SleeveLengthOnePieceMeasurement.HasValue == true ? measurement.I_L_SleeveLengthOnePieceMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.E_I_SleeveLengthTwoPieceMeasurement.HasValue == true ? measurement.E_I_SleeveLengthTwoPieceMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.N_InsideLegMeasurement.HasValue == true ? measurement.N_InsideLegMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.P_Q_BodyRiseMeasurement.HasValue == true ? measurement.P_Q_BodyRiseMeasurement.Value.ToString() : "N/A")}," +
+                $"{(measurement?.R_CloseWristMeasurement.HasValue == true ? measurement.R_CloseWristMeasurement.Value.ToString() : "N/A")}"
+
+                );
+        }
+        await ExportCSVFile(csvContent.ToString(), "All_Clients_With_Measurements.csv");
+        StateHasChanged(); // 🔹 Force UI refresh to remove any overlays
+    }
+
+    private async Task DownloadSelectedClientsCSV()
+    {
+        if (!selectedClients.Any()) return;
+
+        var csvContent = new StringBuilder();
+
+        // CSV header - Add measurement fields
+
+        csvContent.AppendLine(
+
+            "Client Name,Phone,Date,Notes," +
+            "Chest,Seat,Waist,Trouser,Half Back," +
+            "BackNeck To Waist,Syce Depth,Sleeve 1pc,Sleeve 2pc," +
+            "Inside Leg,Body Rise,Close Wrist"
+            );
+
+        foreach (var client in selectedClients)
+        {
+
+            var measurement = client.Measurements?.FirstOrDefault(); // Get the first measurement (if exists)
+
+
+
+            csvContent.AppendLine(
+
+                    $"{client.Name},{client.PhoneNumber},{client.Date},{client.Notes}," +
+                    $"{(measurement?.A_ChestMeasurement.HasValue == true ? measurement.A_ChestMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.B_SeatMeasurement.HasValue == true ? measurement.B_SeatMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.C_WaistMeasurement.HasValue == true ? measurement.C_WaistMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.D_TrouserMeasurement.HasValue == true ? measurement.D_TrouserMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.E_F_HalfBackMeasurement.HasValue == true ? measurement.E_F_HalfBackMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.G_H_BackNeckToWaistMeasurement.HasValue == true ? measurement.G_H_BackNeckToWaistMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.G_I_SyceDepthMeasurement.HasValue == true ? measurement.G_I_SyceDepthMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.I_L_SleeveLengthOnePieceMeasurement.HasValue == true ? measurement.I_L_SleeveLengthOnePieceMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.E_I_SleeveLengthTwoPieceMeasurement.HasValue == true ? measurement.E_I_SleeveLengthTwoPieceMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.N_InsideLegMeasurement.HasValue == true ? measurement.N_InsideLegMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.P_Q_BodyRiseMeasurement.HasValue == true ? measurement.P_Q_BodyRiseMeasurement.Value.ToString() : "N/A")}," +
+                    $"{(measurement?.R_CloseWristMeasurement.HasValue == true ? measurement.R_CloseWristMeasurement.Value.ToString() : "N/A")}"
+
+                    );
+        }
+
+        await ExportCSVFile(csvContent.ToString(), "Selected_Clients_With_Measurements.csv");
+        StateHasChanged(); // 🔹 Force UI refresh to remove any overlays
+    }
+
+    private async Task ExportCSVFile(string csvData, string filename)
+    {
+
+        var bytes = Encoding.UTF8.GetBytes(csvData);
+
+        await JS.InvokeVoidAsync("downloadFile", filename, "text/csv", Convert.ToBase64String(bytes));
     }
 
     private void SelectedItemsChanged(HashSet<ClientMeasurements> selectedItems)
     {
         selectedMeasurements = selectedItems;
+
+        // Extract the clients from the selected measurements
+        selectedClients = selectedItems
+            .Where(m => m.Client != null)
+            .Select(m => m.Client!)
+            .Distinct()
+            .ToHashSet();
+
         StateHasChanged();
+
     }
+
     private async Task DeleteSelectedClients()
     {
         if (selectedMeasurements.Any())
         {
-            var distinctClientIds = selectedMeasurements
-                                    .Select(m => m.ClientId)
-                                    .Distinct();
+            var distinctClientIds = selectedMeasurements.Select(m => m.ClientId).Distinct();
+
             foreach (var clientId in distinctClientIds)
             {
                 await ClientService.DeleteClientAsync(clientId);
             }
-            // Refresh your measurements data
+
             measurements = await ClientService.GetClientMeasurementsAsync();
             selectedMeasurements.Clear();
             StateHasChanged();
@@ -179,26 +366,72 @@
             await ClientService.ClearClientMeasurementAsync(measurement.Id);
         }
 
-        measurements = await ClientService.GetClientMeasurementsAsync(); // reload measurements clearly
-        selectedMeasurements.Clear(); // clear selections explicitly
-        StateHasChanged(); // update UI immediately
+        measurements = await ClientService.GetClientMeasurementsAsync();
+        selectedMeasurements.Clear();
+        StateHasChanged();
+
     }
 
-    private async Task SaveMeasurement()
+
+
+
+
+
+
+    private async Task SaveClient()
+
     {
-        if (editingMeasurement.Id == 0)
+
+        if (!isValid)
+
+            return;
+
+
+
+        if (editingMeasurement.Id > 0)
+
         {
-            await ClientService.AddClientMeasurementAsync(editingMeasurement);
+
+            // ✅ We're only updating the measurement
+
+            await ClientService.UpdateClientMeasurementAsync(editingMeasurement);
+
         }
 
         else
+
         {
-            await ClientService.UpdateClientMeasurementAsync(editingMeasurement);
+
+            // ✅ Add new client and measurement
+
+            await ClientService.AddClientAsync(
+
+                editingClient.Name,
+
+                editingClient.PhoneNumber,
+
+                editingClient.Notes,
+
+                new List<ClientMeasurements> { editingMeasurement }
+
+            );
+
         }
 
+
+
         measurements = await ClientService.GetClientMeasurementsAsync();
+
+        editingClient = new();
+
+        editingMeasurement = new();
+
         showForm = false;
+
+        StateHasChanged();
+
     }
+
 
     private async Task DeleteMeasurement(int measurementId)
     {
@@ -207,15 +440,14 @@
     }
 
     private bool FilterMeasurements(ClientMeasurements measurement)
-
     {
-
         if (string.IsNullOrWhiteSpace(_quickFilter))
 
             return true;
 
         return measurement.Client?.Name?.Contains(_quickFilter, StringComparison.OrdinalIgnoreCase) == true
-            || measurement.A_ChestMeasurement.ToString().Contains(_quickFilter);
-    }
 
+            || measurement.A_ChestMeasurement.ToString().Contains(_quickFilter);
+
+    }
 }

@@ -1,8 +1,11 @@
 ﻿html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    overflow-x: hidden !important; /* Stops horizontal scrolling */
+    overflow-x: auto !important; /* Stops horizontal scrolling */
     width: 100vw !important; /* Forces page to stay inside viewport */
     max-width: 100% !important;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 a, .btn-link {
@@ -20,24 +23,49 @@ a, .btn-link {
 }
 
 /* Ensures tables and their containers don’t push the page wider */
-.mud-container, .mud-card, .mud-table-container {
+.mud-container {
     max-width: 100% !important;
-    overflow-x: hidden !important;
 }
+
+.mud-card-content {
+    overflow-x: auto !important;
+    width: 100%;
+    padding-bottom: 1rem;
+}
+
+.mud-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: auto;
+}
+
 
 /* Force MudDataGrid to match ClientInfo behavior */
 .mud-data-table {
     width: 100% !important;
-    table-layout: fixed !important; /* Prevents columns from stretching */
+    table-layout: auto !important; /* Prevents columns from stretching */
 }
 
     /* Ensure columns fit without causing scroll */
     .mud-data-table th, .mud-data-table td {
-        max-width: 150px !important;
+        max-width: 100px !important;
+        min-width: 80px !important; /* ✅ Let columns shrink a bit */
         white-space: nowrap !important; /* Prevents wrapping that increases row height */
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }
+
+
+
+main {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.content {
+    max-width: 100%;
+    overflow-x: auto;
+}
 
 
 .content {
