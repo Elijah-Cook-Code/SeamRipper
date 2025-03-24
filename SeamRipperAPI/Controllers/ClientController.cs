@@ -5,6 +5,7 @@ using SeamRipperData.Dtos;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.CodeDom.Compiler;
 
 namespace SeamRipperAPI.Controllers
 {
@@ -182,8 +183,6 @@ namespace SeamRipperAPI.Controllers
             return NoContent();
         }
 
-
-
         // ✅ Delete Client
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClient(int id)
@@ -194,5 +193,111 @@ namespace SeamRipperAPI.Controllers
             await _clientRepository.DeleteClientAsync(id); // ✅ Automatically saves changes
             return NoContent();
         }
+
+        [HttpPost("generate/{count}")]
+        public async Task<ActionResult<List<ClientInfoDto>>> GenerateRandomClients(int count)
+        {
+            var clients = await _clientRepository.GenerateRandomClientsAsync(count);
+
+            var clientDtos = clients.Select(client => new ClientInfoDto
+            {
+                Id = client.Id,
+                Name = client.Name,
+                PhoneNumber = client.PhoneNumber,
+                Notes = client.Notes,
+                Date = client.Date,
+                Measurements = client.Measurements?.Select(m => new MeasurementsDto
+                {
+                    Id = m.Id,
+                    ClientId = client.Id,
+                    A_ChestMeasurement = m.A_ChestMeasurement,
+                    B_SeatMeasurement = m.B_SeatMeasurement,
+                    C_WaistMeasurement = m.C_WaistMeasurement,
+                    D_TrouserMeasurement = m.D_TrouserMeasurement,
+                    E_F_HalfBackMeasurement = m.E_F_HalfBackMeasurement,
+                    G_H_BackNeckToWaistMeasurement = m.G_H_BackNeckToWaistMeasurement,
+                    G_I_SyceDepthMeasurement = m.G_I_SyceDepthMeasurement,
+                    I_L_SleeveLengthOnePieceMeasurement = m.I_L_SleeveLengthOnePieceMeasurement,
+                    E_I_SleeveLengthTwoPieceMeasurement = m.E_I_SleeveLengthTwoPieceMeasurement,
+                    N_InsideLegMeasurement = m.N_InsideLegMeasurement,
+                    P_Q_BodyRiseMeasurement = m.P_Q_BodyRiseMeasurement,
+                    R_CloseWristMeasurement = m.R_CloseWristMeasurement
+                }).ToList() ?? new List<MeasurementsDto>()
+            }).ToList();
+
+            return Ok(clientDtos);
+            
+        }
+
+        [HttpPost("batch")]
+        public async Task<ActionResult<List<ClientInfoDto>>> GetClientsByIds([FromBody] List<int> ids)
+        {
+            var clients = await _clientRepository.GetClientsByIdsAsync(ids);
+
+            var clientDtos = clients.Select(client => new ClientInfoDto
+            {
+                Id = client.Id,
+                Name = client.Name,
+                PhoneNumber = client.PhoneNumber,
+                Notes = client.Notes,
+                Date = client.Date,
+                Measurements = client.Measurements.Select(m => new MeasurementsDto
+                {
+                    Id = m.Id,
+                    ClientId = m.ClientId,
+                    A_ChestMeasurement = m.A_ChestMeasurement,
+                    B_SeatMeasurement = m.B_SeatMeasurement,
+                    C_WaistMeasurement = m.C_WaistMeasurement,
+                    D_TrouserMeasurement = m.D_TrouserMeasurement,
+                    E_F_HalfBackMeasurement = m.E_F_HalfBackMeasurement,
+                    G_H_BackNeckToWaistMeasurement = m.G_H_BackNeckToWaistMeasurement,
+                    G_I_SyceDepthMeasurement = m.G_I_SyceDepthMeasurement,
+                    I_L_SleeveLengthOnePieceMeasurement = m.I_L_SleeveLengthOnePieceMeasurement,
+                    E_I_SleeveLengthTwoPieceMeasurement = m.E_I_SleeveLengthTwoPieceMeasurement,
+                    N_InsideLegMeasurement = m.N_InsideLegMeasurement,
+                    P_Q_BodyRiseMeasurement = m.P_Q_BodyRiseMeasurement,
+                    R_CloseWristMeasurement = m.R_CloseWristMeasurement
+                }).ToList()
+            }).ToList();
+
+            return Ok(clientDtos);
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<List<ClientInfoDto>>> SearchClients([FromQuery] string query)
+        {
+            var clients = await _clientRepository.SearchClientsAsync(query);
+
+            var clientDtos = clients.Select(client => new ClientInfoDto
+            {
+                Id = client.Id,
+                Name = client.Name,
+                PhoneNumber = client.PhoneNumber,
+                Notes = client.Notes,
+                Date = client.Date,
+                Measurements = client.Measurements?.Select(m => new MeasurementsDto
+                {
+                    Id = m.Id,
+                    ClientId = client.Id,
+                    A_ChestMeasurement = m.A_ChestMeasurement,
+                    B_SeatMeasurement = m.B_SeatMeasurement,
+                    C_WaistMeasurement = m.C_WaistMeasurement,
+                    D_TrouserMeasurement = m.D_TrouserMeasurement,
+                    E_F_HalfBackMeasurement = m.E_F_HalfBackMeasurement,
+                    G_H_BackNeckToWaistMeasurement = m.G_H_BackNeckToWaistMeasurement,
+                    G_I_SyceDepthMeasurement = m.G_I_SyceDepthMeasurement,
+                    I_L_SleeveLengthOnePieceMeasurement = m.I_L_SleeveLengthOnePieceMeasurement,
+                    E_I_SleeveLengthTwoPieceMeasurement = m.E_I_SleeveLengthTwoPieceMeasurement,
+                    N_InsideLegMeasurement = m.N_InsideLegMeasurement,
+                    P_Q_BodyRiseMeasurement = m.P_Q_BodyRiseMeasurement,
+                    R_CloseWristMeasurement = m.R_CloseWristMeasurement
+                }).ToList() ?? new List<MeasurementsDto>()
+            }).ToList();
+
+            return Ok(clientDtos);
+        }
+
+
+
     }
 }

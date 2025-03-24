@@ -11,6 +11,7 @@ namespace SeamRipperData.Repositories
     {
         Task<List<ClientInfo>> GetClientsAsync();
         Task<ClientInfo?> GetClientByIdAsync(int clientId);
+        Task<List<ClientInfo>> GetClientsByIdsAsync(List<int> ids);
         Task AddClientAsync(ClientInfo client);
         Task UpdateClientAsync(ClientInfo client);
         Task DeleteClientAsync(int clientId);
@@ -25,6 +26,8 @@ namespace SeamRipperData.Repositories
         Task DeleteClientMeasurementAsync(int measurementId);
 
         Task<List<ClientInfo>> GetClientsWithMeasurementsAsync();
+        Task<List<ClientInfo>> GenerateRandomClientsAsync(int count);
+        Task<List<ClientInfo>> SearchClientsAsync(string query);
 
     }
 }

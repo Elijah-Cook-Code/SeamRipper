@@ -26,6 +26,14 @@ namespace SeamRipperData.Repositories
             return await _context.Clients.Include(c => c.Measurements)
                                          .FirstOrDefaultAsync(c => c.Id == clientId);
         }
+        public async Task<List<ClientInfo>> GetClientsByIdsAsync(List<int> ids)
+        {
+            return await _context.Clients
+                .Include(c => c.Measurements)
+                .Where(c => ids.Contains(c.Id))
+                .ToListAsync();
+        }
+
         public async Task AddClientAsync(ClientInfo client)
         {
             _context.Clients.Add(client);
@@ -65,6 +73,16 @@ namespace SeamRipperData.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<ClientInfo>> SearchClientsAsync(string query)
+        {
+            return await _context.Clients
+                .Include(c => c.Measurements)
+                .Where(c => EF.Functions.Like(c.Name, $"%{query}%"))
+                .ToListAsync();
+        }
+
+
 
         public async Task<List<ClientMeasurements>> GetClientMeasurementsAsync()
         {
@@ -117,6 +135,54 @@ namespace SeamRipperData.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<ClientInfo>> GenerateRandomClientsAsync(int count)
+        {
+            var random = new Random();
+            var clients = new List<ClientInfo>();
+
+            var firstNames = new[] { "Alex", "Jordan", "Taylor", "Sam", "Morgan", "Charlie", "Casey", "Jamie", "Cameron", "Riley" };
+            var lastNames = new[] { "Smith", "Johnson", "Lee", "Garcia", "Martinez", "Brown", "Williams", "Anderson", "Clark", "Hall" };
+
+            for (int i = 0; i < count; i++)
+            {
+                var name = $"{firstNames[random.Next(firstNames.Length)]} {lastNames[random.Next(lastNames.Length)]}";
+
+                var client = new ClientInfo
+                {
+                    Name = name,
+                    PhoneNumber = $"555-{random.Next(1000, 9999)}",
+                    Notes = "Generated for testing",
+                    Date = DateTime.Now,
+                    Measurements = new List<ClientMeasurements>
+            {
+                new ClientMeasurements
+                {
+                    A_ChestMeasurement = random.Next(30, 50),
+                    B_SeatMeasurement = random.Next(30, 50),
+                    C_WaistMeasurement = random.Next(30, 50),
+                    D_TrouserMeasurement = random.Next(30, 50),
+                    E_F_HalfBackMeasurement = random.Next(10, 30),
+                    G_H_BackNeckToWaistMeasurement = random.Next(10, 30),
+                    G_I_SyceDepthMeasurement = random.Next(10, 30),
+                    I_L_SleeveLengthOnePieceMeasurement = random.Next(10, 30),
+                    E_I_SleeveLengthTwoPieceMeasurement = random.Next(10, 30),
+                    N_InsideLegMeasurement = random.Next(10, 30),
+                    P_Q_BodyRiseMeasurement = random.Next(10, 30),
+                    R_CloseWristMeasurement = random.Next(5, 15)
+                }
+            }
+                };
+
+                await _context.Clients.AddAsync(client);
+                clients.Add(client);
+            }
+
+            await _context.SaveChangesAsync();
+            return clients;
+        }
+
+
 
     }
 }
