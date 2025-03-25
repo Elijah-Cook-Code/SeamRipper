@@ -34,9 +34,9 @@
 
         <!-- DataGrid Section -->
         <MudCardContent>
-            
-                <MudDataGrid T="ClientMeasurements" MultiSelection="true" Items="@measurements"
-                             SortMode="SortMode.Multiple" Filterable="true" 
+
+            <MudDataGrid @ref="dataGrid" T="ClientMeasurements" MultiSelection="true" Items="@measurements"
+                         SortMode="SortMode.Multiple" Filterable="true" 
                              Hideable="true" SelectedItemsChanged="SelectedItemsChanged" Dense="true" Hover="true"
                              Style="min-width: 1200px; width: 100%; table-layout: fixed;">
                     <Columns>
@@ -159,14 +159,39 @@
 
     private string? _quickFilter;
 
-    
+    private MudDataGrid<ClientMeasurements>? dataGrid;
+
+
+
+
+
+
+
 
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            measurements = await ClientService.GetClientMeasurementsAsync();
+
+            var dtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+
+            var allClients = ClientService.MapDtosToClients(dtos);
+
+            measurements = allClients.SelectMany(c =>
+
+            {
+
+                foreach (var m in c.Measurements)
+
+                    m.Client = c;
+
+                return c.Measurements;
+
+            }).ToList();
+
+
+
         }
 
         catch (Exception ex)
@@ -309,111 +334,238 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
     private async Task GenerateRandomClients()
-    {
-        await ClientService.GenerateRandomClientsAsync(5); // generates 5 random clients
 
-        measurements = await ClientService.GetClientMeasurementsAsync();
-        clients = await ClientService.GetClientsAsync();
+    {
+
+        int count = 5;
+
+
+
+        var response = await Http.PostAsync($"api/clients/generate/{count}", null);
+
+
+
+        if (!response.IsSuccessStatusCode)
+
+        {
+
+            await JS.InvokeVoidAsync("alert", "❌ Failed to generate random clients.");
+
+            return;
+
+        }
+
+
+
+        // 🔁 Now fetch the full updated client list
+
+        var updatedDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+
+        var allClients = ClientService.MapDtosToClients(updatedDtos);
+
+
+
+        measurements = allClients.SelectMany(c =>
+
+        {
+
+            foreach (var m in c.Measurements)
+
+                m.Client = c;
+
+            return c.Measurements;
+
+        }).ToList();
+
+
+
+        // 🔄 Force it to be a new list to bust MudDataGrid's cache
+
+        measurements = new List<ClientMeasurements>(measurements);
+
+
+
+        selectedMeasurements.Clear();
+
+        selectedClients.Clear();
+
+
+
+        Snackbar.Add($"✅ {count} random clients generated!", Severity.Success);
+
+        StateHasChanged();
 
     }
-    
+
     private async Task DownloadAllClientsCSV()
     {
-        var allClients = await ClientService.GetClientsAsync(); // Fetch all clients
+        // 📡 Step 1: Get data directly from the API
+        var response = await Http.GetAsync("api/clients");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("alert", "❌ Failed to fetch clients from API.");
+            return;
+        }
+
+
+
+        var clientDtos = await response.Content.ReadFromJsonAsync<List<ClientInfoDto>>();
+
+
+
+        if (clientDtos is null || !clientDtos.Any())
+
+        {
+
+            await JS.InvokeVoidAsync("alert", "⚠️ No clients returned from the API.");
+
+            return;
+
+        }
+
+
+
+        // 🧱 Step 2: Map DTOs to your models
+
+        var allClients = ClientService.MapDtosToClients(clientDtos);
+
+
+
+        // 📄 Step 3: Build CSV
+
         var csvContent = new StringBuilder();
 
-        // CSV header - Add measurement fields
+
 
         csvContent.AppendLine(
 
             "Client Name,Phone,Date,Notes," +
+
             "Chest,Seat,Waist,Trouser,Half Back," +
+
             "BackNeck To Waist,Syce Depth,Sleeve 1pc,Sleeve 2pc," +
+
             "Inside Leg,Body Rise,Close Wrist"
 
-            );
+        );
+
+
 
         foreach (var client in allClients)
+
         {
-            var measurement = client.Measurements?.FirstOrDefault(); // Get the first measurement (if exists)
+
+            var m = client.Measurements?.FirstOrDefault();
+
+
 
             csvContent.AppendLine(
 
                 $"{client.Name},{client.PhoneNumber},{client.Date},{client.Notes}," +
-                $"{(measurement?.A_ChestMeasurement.HasValue == true ? measurement.A_ChestMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.B_SeatMeasurement.HasValue == true ? measurement.B_SeatMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.C_WaistMeasurement.HasValue == true ? measurement.C_WaistMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.D_TrouserMeasurement.HasValue == true ? measurement.D_TrouserMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.E_F_HalfBackMeasurement.HasValue == true ? measurement.E_F_HalfBackMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.G_H_BackNeckToWaistMeasurement.HasValue == true ? measurement.G_H_BackNeckToWaistMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.G_I_SyceDepthMeasurement.HasValue == true ? measurement.G_I_SyceDepthMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.I_L_SleeveLengthOnePieceMeasurement.HasValue == true ? measurement.I_L_SleeveLengthOnePieceMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.E_I_SleeveLengthTwoPieceMeasurement.HasValue == true ? measurement.E_I_SleeveLengthTwoPieceMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.N_InsideLegMeasurement.HasValue == true ? measurement.N_InsideLegMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.P_Q_BodyRiseMeasurement.HasValue == true ? measurement.P_Q_BodyRiseMeasurement.Value.ToString() : "N/A")}," +
-                $"{(measurement?.R_CloseWristMeasurement.HasValue == true ? measurement.R_CloseWristMeasurement.Value.ToString() : "N/A")}"
 
-                );
+                $"{(m?.A_ChestMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.B_SeatMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.C_WaistMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.D_TrouserMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.E_F_HalfBackMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.G_H_BackNeckToWaistMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.G_I_SyceDepthMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.I_L_SleeveLengthOnePieceMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.E_I_SleeveLengthTwoPieceMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.N_InsideLegMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.P_Q_BodyRiseMeasurement?.ToString() ?? "N/A")}," +
+
+                $"{(m?.R_CloseWristMeasurement?.ToString() ?? "N/A")}"
+
+            );
+
         }
+
+
+
+        // 💾 Step 4: Trigger download
+
         await ExportCSVFile(csvContent.ToString(), "All_Clients_With_Measurements.csv");
-        StateHasChanged(); // 🔹 Force UI refresh to remove any overlays
+
+        StateHasChanged(); // 🔄 Refresh just in case
+
     }
+
+
 
     private async Task DownloadSelectedClientsCSV()
     {
         if (!selectedClients.Any()) return;
 
+        var selectedIds = selectedClients.Select(c => c.Id).ToList();
+
+        // 📡 Step 1: Post selected IDs to the API
+        var response = await Http.PostAsJsonAsync("api/clients/batch", selectedIds);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("alert", "❌ Failed to fetch selected clients from API.");
+            return;
+        }
+
+        var clientDtos = await response.Content.ReadFromJsonAsync<List<ClientInfoDto>>();
+
+        if (clientDtos is null || !clientDtos.Any())
+        {
+            await JS.InvokeVoidAsync("alert", "⚠️ No matching client data returned.");
+            return;
+        }
+
+        // 🧱 Step 2: Map DTOs to models
+        var selectedMapped = ClientService.MapDtosToClients(clientDtos);
+
+        // 📄 Step 3: Build CSV
         var csvContent = new StringBuilder();
 
-        // CSV header - Add measurement fields
-
         csvContent.AppendLine(
-
             "Client Name,Phone,Date,Notes," +
             "Chest,Seat,Waist,Trouser,Half Back," +
             "BackNeck To Waist,Syce Depth,Sleeve 1pc,Sleeve 2pc," +
             "Inside Leg,Body Rise,Close Wrist"
-            );
+        );
 
-        foreach (var client in selectedClients)
+        foreach (var client in selectedMapped)
         {
-
-            var measurement = client.Measurements?.FirstOrDefault(); // Get the first measurement (if exists)
-
-
+            var m = client.Measurements?.FirstOrDefault();
 
             csvContent.AppendLine(
-
-                    $"{client.Name},{client.PhoneNumber},{client.Date},{client.Notes}," +
-                    $"{(measurement?.A_ChestMeasurement.HasValue == true ? measurement.A_ChestMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.B_SeatMeasurement.HasValue == true ? measurement.B_SeatMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.C_WaistMeasurement.HasValue == true ? measurement.C_WaistMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.D_TrouserMeasurement.HasValue == true ? measurement.D_TrouserMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.E_F_HalfBackMeasurement.HasValue == true ? measurement.E_F_HalfBackMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.G_H_BackNeckToWaistMeasurement.HasValue == true ? measurement.G_H_BackNeckToWaistMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.G_I_SyceDepthMeasurement.HasValue == true ? measurement.G_I_SyceDepthMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.I_L_SleeveLengthOnePieceMeasurement.HasValue == true ? measurement.I_L_SleeveLengthOnePieceMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.E_I_SleeveLengthTwoPieceMeasurement.HasValue == true ? measurement.E_I_SleeveLengthTwoPieceMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.N_InsideLegMeasurement.HasValue == true ? measurement.N_InsideLegMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.P_Q_BodyRiseMeasurement.HasValue == true ? measurement.P_Q_BodyRiseMeasurement.Value.ToString() : "N/A")}," +
-                    $"{(measurement?.R_CloseWristMeasurement.HasValue == true ? measurement.R_CloseWristMeasurement.Value.ToString() : "N/A")}"
-
-                    );
+                $"{client.Name},{client.PhoneNumber},{client.Date},{client.Notes}," +
+                $"{(m?.A_ChestMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.B_SeatMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.C_WaistMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.D_TrouserMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.E_F_HalfBackMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.G_H_BackNeckToWaistMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.G_I_SyceDepthMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.I_L_SleeveLengthOnePieceMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.E_I_SleeveLengthTwoPieceMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.N_InsideLegMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.P_Q_BodyRiseMeasurement?.ToString() ?? "N/A")}," +
+                $"{(m?.R_CloseWristMeasurement?.ToString() ?? "N/A")}"
+            );
         }
 
+        // 💾 Step 4: Download CSV
         await ExportCSVFile(csvContent.ToString(), "Selected_Clients_With_Measurements.csv");
-        StateHasChanged(); // 🔹 Force UI refresh to remove any overlays
+
+        StateHasChanged();
     }
 
     private async Task ExportCSVFile(string csvData, string filename)
@@ -442,248 +594,198 @@
 
 
     private async Task OnSearchTextChanged(string value)
-
     {
-
         _quickFilter = value;
 
-
-
         if (string.IsNullOrWhiteSpace(_quickFilter))
-
         {
-
             // Get all clients
-
             var allDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
-
             var allClients = ClientService.MapDtosToClients(allDtos);
 
             measurements = allClients.SelectMany(c =>
-
             {
-
                 foreach (var m in c.Measurements)
-
                     m.Client = c;
 
                 return c.Measurements;
 
             }).ToList();
-
         }
 
         else
-
         {
-
             // Search via API
-
             var searchResults = await Http.GetFromJsonAsync<List<ClientInfoDto>>($"api/clients/search?query={_quickFilter}");
-
             var matchedClients = ClientService.MapDtosToClients(searchResults);
 
             measurements = matchedClients.SelectMany(c =>
-
             {
-
                 foreach (var m in c.Measurements)
-
                     m.Client = c;
 
                 return c.Measurements;
 
             }).ToList();
-
         }
 
-
-
         StateHasChanged();
-
     }
-
-
 
     private async Task DeleteSelectedClients()
     {
-        if (selectedMeasurements.Any())
+        if (!selectedClients.Any()) return;
+
+        var failed = new List<string>();
+
+        foreach (var client in selectedClients)
         {
-            var distinctClientIds = selectedMeasurements.Select(m => m.ClientId).Distinct();
-
-            foreach (var clientId in distinctClientIds)
-            {
-                await ClientService.DeleteClientAsync(clientId);
-            }
-
-            measurements = await ClientService.GetClientMeasurementsAsync();
-            selectedMeasurements.Clear();
-            StateHasChanged();
-        }
-    }
-
-    private async Task ClearSelectedMeasurements()
-    {
-        foreach (var measurement in selectedMeasurements)
-        {
-
-            var response = await Http.PutAsync($"api/clients/measurements/clear/{measurement.Id}", null);
+            var response = await Http.DeleteAsync($"api/clients/{client.Id}");
 
             if (!response.IsSuccessStatusCode)
             {
-                await JS.InvokeVoidAsync("alert", "❌ Failed to clear measurement via API.");
-                return;
+                failed.Add(client.Name);
             }
         }
 
-        measurements = await ClientService.GetClientMeasurementsAsync();
-        selectedMeasurements.Clear();
-        StateHasChanged();
-
-    }
-
-
-
-    private async Task SaveClient()
-
-    {
-
-        if (!isValid)
-
-            return;
-
-
-
-        if (editingMeasurement.Id > 0)
-
-        {
-
-            // ✅ Update measurement via API
-
-            var dto = new MeasurementsDto
-
-                {
-
-                    Id = editingMeasurement.Id,
-
-                    ClientId = editingMeasurement.ClientId,
-
-                    A_ChestMeasurement = editingMeasurement.A_ChestMeasurement,
-
-                    B_SeatMeasurement = editingMeasurement.B_SeatMeasurement,
-
-                    C_WaistMeasurement = editingMeasurement.C_WaistMeasurement,
-
-                    D_TrouserMeasurement = editingMeasurement.D_TrouserMeasurement,
-
-                    E_F_HalfBackMeasurement = editingMeasurement.E_F_HalfBackMeasurement,
-
-                    G_H_BackNeckToWaistMeasurement = editingMeasurement.G_H_BackNeckToWaistMeasurement,
-
-                    G_I_SyceDepthMeasurement = editingMeasurement.G_I_SyceDepthMeasurement,
-
-                    I_L_SleeveLengthOnePieceMeasurement = editingMeasurement.I_L_SleeveLengthOnePieceMeasurement,
-
-                    E_I_SleeveLengthTwoPieceMeasurement = editingMeasurement.E_I_SleeveLengthTwoPieceMeasurement,
-
-                    N_InsideLegMeasurement = editingMeasurement.N_InsideLegMeasurement,
-
-                    P_Q_BodyRiseMeasurement = editingMeasurement.P_Q_BodyRiseMeasurement,
-
-                    R_CloseWristMeasurement = editingMeasurement.R_CloseWristMeasurement
-
-                };
-
-
-
-            var response = await Http.PutAsJsonAsync($"api/clients/measurements/{dto.Id}", dto);
-
-
-
-            if (!response.IsSuccessStatusCode)
-
-            {
-
-                await JS.InvokeVoidAsync("alert", "❌ Failed to update measurement via API.");
-
-                return;
-
-            }
-
-
-
-            await JS.InvokeVoidAsync("alert", "✅ Measurement updated via API!");
-
-        }
-
-        else
-
-        {
-
-            // ✅ Add new client + measurement via API
-
-            editingClient.Measurements = new List<ClientMeasurements> { editingMeasurement };
-
-            var newClientDto = ClientService.MapClientToDto(editingClient); // You can keep using the service just for mapping
-
-
-
-            var response = await Http.PostAsJsonAsync("api/clients", newClientDto);
-
-
-
-            if (!response.IsSuccessStatusCode)
-
-            {
-
-                await JS.InvokeVoidAsync("alert", "❌ Failed to save client via API.");
-
-                return;
-
-            }
-
-
-
-            await JS.InvokeVoidAsync("alert", "✅ Client and measurement added via API!");
-
-        }
-
-
-
-        // ✅ Refresh the measurements
-
+        // 🔄 Refresh data from API
         var updatedDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
-
         var allClients = ClientService.MapDtosToClients(updatedDtos);
 
-
-
         measurements = allClients.SelectMany(c =>
-
         {
-
             foreach (var m in c.Measurements)
-
                 m.Client = c;
-
-
 
             return c.Measurements;
 
         }).ToList();
 
+        selectedClients.Clear();
+        selectedMeasurements.Clear();
 
+        if (failed.Any())
+            await JS.InvokeVoidAsync("alert", $"❌ Failed to delete: {string.Join(", ", failed)}");
+
+        else
+            Snackbar.Add("✅ Selected clients deleted successfully!", Severity.Success);
+
+        StateHasChanged();
+    }
+
+    private async Task ClearSelectedMeasurements()
+    {
+        var failed = new List<int>();
+
+        foreach (var measurement in selectedMeasurements)
+        {
+            var response = await Http.PutAsync($"api/clients/measurements/clear/{measurement.Id}", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                failed.Add(measurement.Id);
+            }
+        }
+
+        // 🔄 Refresh the list
+        var updatedDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+        var allClients = ClientService.MapDtosToClients(updatedDtos);
+
+        measurements = allClients.SelectMany(c =>
+        {
+            foreach (var m in c.Measurements)
+                m.Client = c;
+
+            return c.Measurements;
+
+        }).ToList();
+
+        selectedMeasurements.Clear();
+        selectedClients.Clear();
+
+        if (failed.Any())
+        {
+            await JS.InvokeVoidAsync("alert", $"❌ Failed to clear: {string.Join(", ", failed)}");
+        }
+
+        else
+        {
+            Snackbar.Add("✅ Selected measurements cleared successfully!", Severity.Success);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task SaveClient()
+    {
+        if (!isValid)
+            return;
+
+        if (editingMeasurement.Id > 0)
+        {
+            // ✅ Update measurement via API
+            var dto = new MeasurementsDto
+                {
+                    Id = editingMeasurement.Id,
+                    ClientId = editingMeasurement.ClientId,
+                    A_ChestMeasurement = editingMeasurement.A_ChestMeasurement,
+                    B_SeatMeasurement = editingMeasurement.B_SeatMeasurement,
+                    C_WaistMeasurement = editingMeasurement.C_WaistMeasurement,
+                    D_TrouserMeasurement = editingMeasurement.D_TrouserMeasurement,
+                    E_F_HalfBackMeasurement = editingMeasurement.E_F_HalfBackMeasurement,
+                    G_H_BackNeckToWaistMeasurement = editingMeasurement.G_H_BackNeckToWaistMeasurement,
+                    G_I_SyceDepthMeasurement = editingMeasurement.G_I_SyceDepthMeasurement,
+                    I_L_SleeveLengthOnePieceMeasurement = editingMeasurement.I_L_SleeveLengthOnePieceMeasurement,
+                    E_I_SleeveLengthTwoPieceMeasurement = editingMeasurement.E_I_SleeveLengthTwoPieceMeasurement,
+                    N_InsideLegMeasurement = editingMeasurement.N_InsideLegMeasurement,
+                    P_Q_BodyRiseMeasurement = editingMeasurement.P_Q_BodyRiseMeasurement,
+                    R_CloseWristMeasurement = editingMeasurement.R_CloseWristMeasurement
+                };
+
+            var response = await Http.PutAsJsonAsync($"api/clients/measurements/{dto.Id}", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "❌ Failed to update measurement via API.");
+                return;
+            }
+
+            await JS.InvokeVoidAsync("alert", "✅ Measurement updated via API!");
+        }
+
+        else
+        {
+            // ✅ Add new client + measurement via API
+            editingClient.Measurements = new List<ClientMeasurements> { editingMeasurement };
+
+            var newClientDto = ClientService.MapClientToDto(editingClient); // You can keep using the service just for mapping
+            var response = await Http.PostAsJsonAsync("api/clients", newClientDto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "❌ Failed to save client via API.");
+                return;
+            }
+
+            await JS.InvokeVoidAsync("alert", "✅ Client and measurement added via API!");
+        }
+
+        // ✅ Refresh the measurements
+        var updatedDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+        var allClients = ClientService.MapDtosToClients(updatedDtos);
+
+        measurements = allClients.SelectMany(c =>
+        {
+            foreach (var m in c.Measurements)
+                m.Client = c;
+
+            return c.Measurements;
+        }).ToList();
 
         editingClient = new();
-
         editingMeasurement = new();
 
         showForm = false;
 
         StateHasChanged();
-
-    }
-
-
-    
+    }   
 }

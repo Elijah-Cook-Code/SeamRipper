@@ -6,6 +6,8 @@
 @using System.Text
 @inject HttpClient Http
 @using SeamRipperData.Dtos;
+@inject ISnackbar Snackbar
+
 
 
 <MudContainer>
@@ -135,7 +137,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        clients = await ClientService.GetClientsAsync();
+        var dtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+        clients = ClientService.MapDtosToClients(dtos);
+
     }
 
     private void SelectedItemsChanged(HashSet<ClientInfo> selectedItems)
@@ -145,27 +149,28 @@
     }
 
 
-
     private async Task GenerateRandomClients()
-
     {
         int count = 5;
-        var response = await Http.PostAsync("api/clients/generate/5", null);
+        var response = await Http.PostAsync($"api/clients/generate/{count}", null);
 
-        if (response.IsSuccessStatusCode)
-        {
-            var newClientDtos = await response.Content.ReadFromJsonAsync<List<ClientInfoDto>>();
-            clients = ClientService.MapDtosToClients(newClientDtos);
-
-            await JS.InvokeVoidAsync("alert", $" {newClientDtos.Count} clients generated!");
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             await JS.InvokeVoidAsync("alert", "❌ Failed to generate random clients.");
+            return;
         }
-        StateHasChanged();
 
+        // ✅ Now fetch the full list again from the API
+        var allClientDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+        clients = ClientService.MapDtosToClients(allClientDtos);
+
+        selectedClients.Clear();
+        Snackbar.Add($"✅ {count} random clients generated!", Severity.Success);
+
+        StateHasChanged(); // Make sure UI refreshes
     }
+
+    
 
     private async Task DeleteSelectedClients()
     {

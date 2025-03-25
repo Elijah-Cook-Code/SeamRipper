@@ -349,10 +349,5 @@ namespace SeamRipperAPI.Controllers
             await _clientRepository.UpdateClientMeasurementAsync(measurement);
             return Ok();
         }
-
-
-
-
-
     }
 }
