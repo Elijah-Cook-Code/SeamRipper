@@ -7,6 +7,10 @@
 @inject IDialogService DialogService
 @inject IJSRuntime JS
 @using System.Text
+@inject HttpClient Http
+@using SeamRipperData.Dtos
+
+
 
 <MudContainer MaxWidth="MaxWidth.False" Style="width: 100%;">
     <MudCard Elevation="4" Style="width: 100%;">
@@ -14,10 +18,15 @@
         <MudCardHeader>
             <MudText Typo="Typo.h6">Client Measurements</MudText>
             <MudSpacer />
-            <MudTextField @bind-Value="_quickFilter" Placeholder="Search Measurements By Name..."
-                          Adornment="Adornment.Start" Immediate="true"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0">
-            </MudTextField>
+            <MudTextField T="string"
+                          Value="_quickFilter"
+                          ValueChanged="OnSearchTextChanged"
+                          Placeholder="Search Measurements..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          IconSize="Size.Medium" Class="mt-0" />
+
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ToggleForm">
                 @(showForm ? "Cancel" : "Add Client")
             </MudButton>
@@ -27,7 +36,7 @@
         <MudCardContent>
             
                 <MudDataGrid T="ClientMeasurements" MultiSelection="true" Items="@measurements"
-                             SortMode="SortMode.Multiple" Filterable="true" QuickFilter="FilterMeasurements"
+                             SortMode="SortMode.Multiple" Filterable="true" 
                              Hideable="true" SelectedItemsChanged="SelectedItemsChanged" Dense="true" Hover="true"
                              Style="min-width: 1200px; width: 100%; table-layout: fixed;">
                     <Columns>
@@ -196,31 +205,119 @@
 
     }
 
+
+
+
+
+
+
     private async Task ClearMeasurement(int measurementId)
+
     {
+
+        Console.WriteLine($"🧪 Clearing Measurement ID: {measurementId}");
+
         bool confirmed = (await DialogService.ShowMessageBox(
+
             "Confirm Clear",
-            $"Are you sure you want to clear measurements?",
+
+            "Are you sure you want to clear measurements?",
 
             yesText: "Yes",
 
             cancelText: "Cancel")) ?? false;
 
+
+
         if (!confirmed)
 
             return;
 
-        foreach (var measurement in selectedMeasurements)
+
+
+        // 🔄 Clear selection before update to avoid stale data
+
+        selectedMeasurements.Clear();
+
+        selectedClients.Clear();
+
+
+
+        // 📡 Call API to clear measurement
+
+        var response = await Http.PutAsync($"api/clients/measurements/clear/{measurementId}", null);
+
+
+
+        if (!response.IsSuccessStatusCode)
+
         {
-            await ClientService.ClearClientMeasurementAsync(measurement.Id);
+
+            var error = await response.Content.ReadAsStringAsync();
+
+            await JS.InvokeVoidAsync("alert", $"❌ API Error: {error}");
+
+            return;
+
         }
 
-        await ClientService.ClearClientMeasurementAsync(measurementId);
-        measurements = await ClientService.GetClientMeasurementsAsync();
 
-        Snackbar.Add("Measurement cleared successfully!", Severity.Success);
+
+        // 🔄 Get the full updated list from the API again
+
+        var updatedDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+
+        var allClients = ClientService.MapDtosToClients(updatedDtos);
+
+
+
+        // ✅ Rebuild measurement list and re-link clients
+
+        measurements = allClients.SelectMany(c =>
+
+        {
+
+            foreach (var m in c.Measurements)
+
+                m.Client = c;
+
+            return c.Measurements;
+
+        }).ToList();
+
+
+
+        foreach (var m in measurements)
+
+        {
+
+            Console.WriteLine($"✔ Measurement ID: {m.Id} for Client ID: {m.ClientId}");
+
+        }
+
+
+
+
+
+
+
+        Snackbar.Add("✅ Measurement cleared successfully!", Severity.Success);
+
         StateHasChanged();
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
 
     private async Task GenerateRandomClients()
     {
@@ -342,6 +439,72 @@
 
     }
 
+
+
+    private async Task OnSearchTextChanged(string value)
+
+    {
+
+        _quickFilter = value;
+
+
+
+        if (string.IsNullOrWhiteSpace(_quickFilter))
+
+        {
+
+            // Get all clients
+
+            var allDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+
+            var allClients = ClientService.MapDtosToClients(allDtos);
+
+            measurements = allClients.SelectMany(c =>
+
+            {
+
+                foreach (var m in c.Measurements)
+
+                    m.Client = c;
+
+                return c.Measurements;
+
+            }).ToList();
+
+        }
+
+        else
+
+        {
+
+            // Search via API
+
+            var searchResults = await Http.GetFromJsonAsync<List<ClientInfoDto>>($"api/clients/search?query={_quickFilter}");
+
+            var matchedClients = ClientService.MapDtosToClients(searchResults);
+
+            measurements = matchedClients.SelectMany(c =>
+
+            {
+
+                foreach (var m in c.Measurements)
+
+                    m.Client = c;
+
+                return c.Measurements;
+
+            }).ToList();
+
+        }
+
+
+
+        StateHasChanged();
+
+    }
+
+
+
     private async Task DeleteSelectedClients()
     {
         if (selectedMeasurements.Any())
@@ -363,7 +526,14 @@
     {
         foreach (var measurement in selectedMeasurements)
         {
-            await ClientService.ClearClientMeasurementAsync(measurement.Id);
+
+            var response = await Http.PutAsync($"api/clients/measurements/clear/{measurement.Id}", null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "❌ Failed to clear measurement via API.");
+                return;
+            }
         }
 
         measurements = await ClientService.GetClientMeasurementsAsync();
@@ -371,10 +541,6 @@
         StateHasChanged();
 
     }
-
-
-
-
 
 
 
@@ -392,9 +558,61 @@
 
         {
 
-            // ✅ We're only updating the measurement
+            // ✅ Update measurement via API
 
-            await ClientService.UpdateClientMeasurementAsync(editingMeasurement);
+            var dto = new MeasurementsDto
+
+                {
+
+                    Id = editingMeasurement.Id,
+
+                    ClientId = editingMeasurement.ClientId,
+
+                    A_ChestMeasurement = editingMeasurement.A_ChestMeasurement,
+
+                    B_SeatMeasurement = editingMeasurement.B_SeatMeasurement,
+
+                    C_WaistMeasurement = editingMeasurement.C_WaistMeasurement,
+
+                    D_TrouserMeasurement = editingMeasurement.D_TrouserMeasurement,
+
+                    E_F_HalfBackMeasurement = editingMeasurement.E_F_HalfBackMeasurement,
+
+                    G_H_BackNeckToWaistMeasurement = editingMeasurement.G_H_BackNeckToWaistMeasurement,
+
+                    G_I_SyceDepthMeasurement = editingMeasurement.G_I_SyceDepthMeasurement,
+
+                    I_L_SleeveLengthOnePieceMeasurement = editingMeasurement.I_L_SleeveLengthOnePieceMeasurement,
+
+                    E_I_SleeveLengthTwoPieceMeasurement = editingMeasurement.E_I_SleeveLengthTwoPieceMeasurement,
+
+                    N_InsideLegMeasurement = editingMeasurement.N_InsideLegMeasurement,
+
+                    P_Q_BodyRiseMeasurement = editingMeasurement.P_Q_BodyRiseMeasurement,
+
+                    R_CloseWristMeasurement = editingMeasurement.R_CloseWristMeasurement
+
+                };
+
+
+
+            var response = await Http.PutAsJsonAsync($"api/clients/measurements/{dto.Id}", dto);
+
+
+
+            if (!response.IsSuccessStatusCode)
+
+            {
+
+                await JS.InvokeVoidAsync("alert", "❌ Failed to update measurement via API.");
+
+                return;
+
+            }
+
+
+
+            await JS.InvokeVoidAsync("alert", "✅ Measurement updated via API!");
 
         }
 
@@ -402,25 +620,59 @@
 
         {
 
-            // ✅ Add new client and measurement
+            // ✅ Add new client + measurement via API
 
-            await ClientService.AddClientAsync(
+            editingClient.Measurements = new List<ClientMeasurements> { editingMeasurement };
 
-                editingClient.Name,
+            var newClientDto = ClientService.MapClientToDto(editingClient); // You can keep using the service just for mapping
 
-                editingClient.PhoneNumber,
 
-                editingClient.Notes,
 
-                new List<ClientMeasurements> { editingMeasurement }
+            var response = await Http.PostAsJsonAsync("api/clients", newClientDto);
 
-            );
+
+
+            if (!response.IsSuccessStatusCode)
+
+            {
+
+                await JS.InvokeVoidAsync("alert", "❌ Failed to save client via API.");
+
+                return;
+
+            }
+
+
+
+            await JS.InvokeVoidAsync("alert", "✅ Client and measurement added via API!");
 
         }
 
 
 
-        measurements = await ClientService.GetClientMeasurementsAsync();
+        // ✅ Refresh the measurements
+
+        var updatedDtos = await Http.GetFromJsonAsync<List<ClientInfoDto>>("api/clients");
+
+        var allClients = ClientService.MapDtosToClients(updatedDtos);
+
+
+
+        measurements = allClients.SelectMany(c =>
+
+        {
+
+            foreach (var m in c.Measurements)
+
+                m.Client = c;
+
+
+
+            return c.Measurements;
+
+        }).ToList();
+
+
 
         editingClient = new();
 
@@ -433,21 +685,5 @@
     }
 
 
-    private async Task DeleteMeasurement(int measurementId)
-    {
-        await ClientService.DeleteClientMeasurementAsync(measurementId);
-        measurements = await ClientService.GetClientMeasurementsAsync();
-    }
-
-    private bool FilterMeasurements(ClientMeasurements measurement)
-    {
-        if (string.IsNullOrWhiteSpace(_quickFilter))
-
-            return true;
-
-        return measurement.Client?.Name?.Contains(_quickFilter, StringComparison.OrdinalIgnoreCase) == true
-
-            || measurement.A_ChestMeasurement.ToString().Contains(_quickFilter);
-
-    }
+    
 }

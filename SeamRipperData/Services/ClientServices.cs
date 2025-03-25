@@ -152,36 +152,55 @@ namespace SeamRipperData.Services
             }
         }
 
-        
-            public List<ClientInfo> MapDtosToClients(List<ClientInfoDto> dtos)
+
+        public List<ClientInfo> MapDtosToClients(List<ClientInfoDto> dtos)
+        {
+            return dtos.Select(dto =>
             {
-                return dtos.Select(dto => new ClientInfo
+                var client = new ClientInfo
                 {
                     Id = dto.Id,
                     Name = dto.Name,
                     PhoneNumber = dto.PhoneNumber,
                     Date = dto.Date,
                     Notes = dto.Notes,
-                    Measurements = dto.Measurements?.Select(m => new ClientMeasurements
-                    {
-                        A_ChestMeasurement = (int?)m.A_ChestMeasurement,
-                        B_SeatMeasurement = (int?)m.B_SeatMeasurement,
-                        C_WaistMeasurement = (int?)m.C_WaistMeasurement,
-                        D_TrouserMeasurement = (int?)m.D_TrouserMeasurement,
-                        E_F_HalfBackMeasurement = (int?)m.E_F_HalfBackMeasurement,
-                        G_H_BackNeckToWaistMeasurement = (int?)m.G_H_BackNeckToWaistMeasurement,
-                        G_I_SyceDepthMeasurement = (int?)m.G_I_SyceDepthMeasurement,
-                        I_L_SleeveLengthOnePieceMeasurement = (int?)m.I_L_SleeveLengthOnePieceMeasurement,
-                        E_I_SleeveLengthTwoPieceMeasurement = (int?)m.E_I_SleeveLengthTwoPieceMeasurement,
-                        N_InsideLegMeasurement = (int?)m.N_InsideLegMeasurement,
-                        P_Q_BodyRiseMeasurement = (int?)m.P_Q_BodyRiseMeasurement,
-                        R_CloseWristMeasurement = (int?)m.R_CloseWristMeasurement
-                    }).ToList() ?? new List<ClientMeasurements>()
-                }).ToList();
-            }
+                    Measurements = new List<ClientMeasurements>()
+                };
 
-           
-        
+                if (dto.Measurements != null)
+                {
+                    foreach (var m in dto.Measurements)
+                    {
+                        var measurement = new ClientMeasurements
+                        {
+                            Id = m.Id,
+                            ClientId = dto.Id,
+                            A_ChestMeasurement = (int?)m.A_ChestMeasurement,
+                            B_SeatMeasurement = (int?)m.B_SeatMeasurement,
+                            C_WaistMeasurement = (int?)m.C_WaistMeasurement,
+                            D_TrouserMeasurement = (int?)m.D_TrouserMeasurement,
+                            E_F_HalfBackMeasurement = (int?)m.E_F_HalfBackMeasurement,
+                            G_H_BackNeckToWaistMeasurement = (int?)m.G_H_BackNeckToWaistMeasurement,
+                            G_I_SyceDepthMeasurement = (int?)m.G_I_SyceDepthMeasurement,
+                            I_L_SleeveLengthOnePieceMeasurement = (int?)m.I_L_SleeveLengthOnePieceMeasurement,
+                            E_I_SleeveLengthTwoPieceMeasurement = (int?)m.E_I_SleeveLengthTwoPieceMeasurement,
+                            N_InsideLegMeasurement = (int?)m.N_InsideLegMeasurement,
+                            P_Q_BodyRiseMeasurement = (int?)m.P_Q_BodyRiseMeasurement,
+                            R_CloseWristMeasurement = (int?)m.R_CloseWristMeasurement,
+                            Client = client // ✅ link back to parent
+                        };
+
+                        client.Measurements.Add(measurement);
+                    }
+                }
+
+                return client;
+            }).ToList();
+        }
+
+
+
+
         public ClientInfoDto MapClientToDto(ClientInfo client)
         {
             return new ClientInfoDto

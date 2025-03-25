@@ -297,6 +297,61 @@ namespace SeamRipperAPI.Controllers
             return Ok(clientDtos);
         }
 
+        [HttpPut("measurements/{id}")]
+        public async Task<IActionResult> UpdateMeasurement(int id, [FromBody] MeasurementsDto dto)
+        {
+            var measurement = await _clientRepository.GetMeasurementByIdAsync(id);
+            if (measurement == null) return NotFound();
+
+            measurement.A_ChestMeasurement = (int?)dto.A_ChestMeasurement;
+            measurement.B_SeatMeasurement = (int?)dto.B_SeatMeasurement;
+            measurement.C_WaistMeasurement = (int?)dto.C_WaistMeasurement;
+            measurement.D_TrouserMeasurement = (int?)dto.D_TrouserMeasurement;
+            measurement.E_F_HalfBackMeasurement = (int?)dto.E_F_HalfBackMeasurement;
+            measurement.G_H_BackNeckToWaistMeasurement = (int?)dto.G_H_BackNeckToWaistMeasurement;
+            measurement.G_I_SyceDepthMeasurement = (int?)dto.G_I_SyceDepthMeasurement;
+            measurement.I_L_SleeveLengthOnePieceMeasurement = (int?)dto.I_L_SleeveLengthOnePieceMeasurement;
+            measurement.E_I_SleeveLengthTwoPieceMeasurement = (int?)dto.E_I_SleeveLengthTwoPieceMeasurement;
+            measurement.N_InsideLegMeasurement = (int?)dto.N_InsideLegMeasurement;
+            measurement.P_Q_BodyRiseMeasurement = (int?)dto.P_Q_BodyRiseMeasurement;
+            measurement.R_CloseWristMeasurement = (int?)dto.R_CloseWristMeasurement;
+
+            await _clientRepository.UpdateClientMeasurementAsync(measurement);
+            return Ok();
+        }
+
+        [HttpPut("measurements/clear/{id}")]
+        public async Task<IActionResult> ClearMeasurement(int id)
+        {
+            Console.WriteLine($"🔍 Attempting to clear measurement ID: {id}");
+
+            var measurement = await _clientRepository.GetMeasurementByIdAsync(id);
+            if (measurement == null)
+            {
+                Console.WriteLine("❌ Measurement not found in DB.");
+                return NotFound();
+            }
+
+            // Reset all values
+            measurement.A_ChestMeasurement = 0;
+            measurement.B_SeatMeasurement = 0;
+            measurement.C_WaistMeasurement = 0;
+            measurement.D_TrouserMeasurement = 0;
+            measurement.E_F_HalfBackMeasurement = 0;
+            measurement.G_H_BackNeckToWaistMeasurement = 0;
+            measurement.G_I_SyceDepthMeasurement = 0;
+            measurement.I_L_SleeveLengthOnePieceMeasurement = 0;
+            measurement.E_I_SleeveLengthTwoPieceMeasurement = 0;
+            measurement.N_InsideLegMeasurement = 0;
+            measurement.P_Q_BodyRiseMeasurement = 0;
+            measurement.R_CloseWristMeasurement = 0;
+
+            await _clientRepository.UpdateClientMeasurementAsync(measurement);
+            return Ok();
+        }
+
+
+
 
 
     }
