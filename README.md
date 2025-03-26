@@ -1,19 +1,44 @@
 # SeamRipper
 SeamRipper
 
-# ["At The Seams"]
+# Please use the refactor-api-branch for my capstone (I didnt merge it because I want to revisit the main branch later)
 
-## REQUIRES THE REPO ATTHESEAMS.DATA
-  https://github.com/Elijah-Cook-Code/AtTheSeams.Data.git
-  (this contains DB, DATA MODELS, LOGIC, EF CORE + MIGRATIONS)
-  The required repo above needs to be a project in the sln that if referenced by ATTHESEAMS main repo
-  (looking for the easiest way to get it in the soulution without breaking the program)
+# SETUP INSTRUCTIONS (api version)
 
-  this is maybe the 3rd time starting this project other repos on my github have been previous attempts as well!
+-download the refactor-api-integration branch 
+-open the brach/sln in vs code 
+-open the package manager console in vs-
+-cd to the directory that contains the SeamRipperAPI project-
+-once there run "dotnet run"- (leave running)
+-should build and launch the api-
+-it should create a local host, something like this in the package manager console "http://Localhost:5047/" 
+-copy that 
+-then go to the "SeamRipper" Project in the sln, navigate to the mauiprogram.cs file
+-go to line 32 in the code or around there and find this line       
+    builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5047/") });
+-replace the local host with yours if a different one was created, if "http://Localhost:5047/" was created for
+your local host as well no need to change this in the maui-program 
+-make sure your api project is still running in the background/pmc
+-next set "SeamRipper" in sln to main project/ or check to make sure it is
+-run it 
+-the program should launch and use the api!
+
+# notes:
+    if the above works fine, you can repeat this everytime to run the application, but since/if the above worked you should 
+  be able to do a dual start in vs, just change the config start up projects to run
+    -SeamRipper
+    -SeamRipperAPI
+  once you do that you should be able to run it without doing the above everytime. That is up to you!
+
+# SETUP PROJECT MAIN (this is the offline version)
+  -You should be able to just download this branch and run it
+  -should work 
+
+# trouble shooting: (things to try if you have issues)
+    -delete the old db and repeat the process above 
+    
 
 ## 1. Project Overview
-
-- **Description:**
   
 Overview
   "At The Seams" is a client measurement and tracking system designed for tailoring and alterations. The application allows tailors and seamstresses to store, retrieve, 
@@ -40,7 +65,6 @@ Client Management
 Measurement Tracking
     Each client can have multiple measurements stored.
     Fields include chest, waist, trouser length, sleeve length, and more.
-    Supports data validation to prevent incorrect entries.
 
 Database Integration (CRUD Operations)
     Uses Entity Framework Core (SQLite) to manage client records.
@@ -55,87 +79,91 @@ Asynchronous Operations
     All database interactions are async to improve performance.
     Avoids blocking the UI by using async/await with Entity Framework Core.
 
-- **Key Features:**  
-  - **Feature 1:** Robust CRUD Database
-  - **Feature 2:** Use information in DB to expedite drafting, by performing calculations on measurements from the DB
-  - **Feature 3:** Create Garment object based on selected Client, by parsing the Clients data, taking the required measurements for the Garment(object) requested based on its requirements  
-  - **Feature 2:** Entity Relationship (One-to-Many): Clients and measurements are linked via foreign key (ClientId), allowing efficient data retrieval.
-  - **Feature 3:** Asynchronous Operations: All database interactions are async, ensuring smooth UI responsiveness.
-
---- 
-
+- **Future Goals:**  
+  - **Goal 2:** Use information in DB to expedite drafting, by performing calculations on measurements from the DB
+  - **Goal 3:** Create Garment object based on selected Client, by parsing the Clients data, taking the required measurements for the Garment(object) requested based on its requirements  
+ 
 ## 5. Visual Appeal
 
 - **Design & UX:**  
   -atm more concered with building the skeleton of the program then looking to focus more on this at a later date, I do have some ideas for it. I'd like it to present the different tables, client info, client measurements. The allow the user to interact with them as needed and maybe in the future have it create a table that will create garments based on the clients information and put that into a new table 
 
-- **Inspiration:**
-    ??
+### API Integration (Refactor Branch)
 
+- **API Usage:**  
+  The `refactor-api-integration` branch relies fully on a self-hosted Web API for all client and measurement operations. This ensures clear separation of concerns between UI, business logic, and data access.
+
+- **Main vs. API Branches:**  
+  - `main`: local service logic only (offline capable)
+  - `refactor-api-integration`: API-driven (recommended for real-world use)
+
+- **API Details:**
+  - CRUD operations for both `ClientInfo` and `ClientMeasurements` are routed via HTTP calls.
+  - API hosted using ASP.NET Core Web API.
+  - All logic moved into `ClientRepository` and `ClientsController.cs`.
 
 ---
 
-## Software Project Requirements
-
-### Application Structure
- 
-Project Structure
-    Components/Layout → Contains layout files (MainLayout.razor, NavMenu.razor).
-    Components/Pages → Includes UI pages like Clients.razor, ClientMeasurements.razor.
-    Data/Connections → Database context (ClientContext.cs).
-    Data/Models → Defines database models (ClientInfo.cs, ClientMeasurements.cs).
-    Data/Services → Business logic (ClientLogic.cs).
-    MauiProgram.cs → Application startup, dependency injection, and database initialization.
-
-### API Integration
-
-- **API Usage:**  
-    -looking for a good idea to incorperate to this one, possibly something relating to image storage for clients 
-- **Integration Details:**  
-
-
 ### Database Interaction
 
-Implementation Details
+**Database Setup (EF Core)**
+- Managed via `ClientContext.cs`
+- Two main models:
+  - `ClientInfo`: basic client data
+  - `ClientMeasurements`: measurement records linked by `ClientId`
 
-Database Setup & ORM (Entity Framework Core)
-    The database is defined in ClientContext.cs​
+**One-to-Many Relationship:**  
+Each `ClientInfo` can have one or more `ClientMeasurements`.
 
-Two models:
-    -ClientInfo.cs (Holds client details)​
-    -ClientMeasurements.cs (Stores measurement data, linked via ClientId)​
-Relationship:
-      One ClientInfo can have multiple ClientMeasurements (One-to-Many).
+**Automatic Migrations:**  
+DB schema updates run on app startup via `MauiProgram.cs`
 
-CRUD Operations (Client & Measurements)
-    All CRUD operations are handled inside ClientLogic.cs​
-Functions include:
-        GetClientsAsync()
-        GetAllMeasurementsAsync()
-        AddClientAsync()
-        UpdateClientAsync()
-        DeleteClientAsync()
-        AddClientMeasurementAsync()
-        DeleteClientMeasurementAsync()
+---
 
-UI (Blazor & MudBlazor)
-    The Clients.razor page allows users to view and manage clients.
-    The ClientMeasurements.razor page enables input and editing of measurements.
+### UI (Blazor Hybrid w/ MudBlazor)
 
-Dependency Injection & Startup
-    -Services are registered in MauiProgram.cs​
-    -Database migration automatically runs at startup.
-    -MudBlazor UI components are enabled for enhanced UI.
+- **Clients.razor**
+  - Add/edit/delete/search clients
+  - Export all/selected as CSV
+  - Generate random clients (via API)
 
-### 6.4 Functions/Methods
-        
-        GetClientsAsync()
-        GetAllMeasurementsAsync()
-        AddClientAsync()
-        UpdateClientAsync()
-        DeleteClientAsync()
-        AddClientMeasurementAsync()
-        DeleteClientMeasurementAsync()
+- **ClientMeasurements.razor**
+  - Edit & clear measurements per client
+  - Delete selected measurements and/or clients
+  - Export all/selected as CSV
+  - Generate random clients and refresh UI
+
+---
+
+### Dependency Injection & Startup
+
+- All services (API & logic) registered in `MauiProgram.cs`
+- Uses `HttpClient` to call external API endpoints
+- UI uses MudBlazor for responsive, material-style layout
+- Hosted API endpoints are centralized in the logic layer
+
+---
+
+### Core Functionality
+
+All of these now use the Web API (in the refactor branch):
+```
+GetClientsAsync()
+GetClientMeasurementsAsync()
+AddClientAsync()
+UpdateClientAsync()
+DeleteClientAsync()
+ClearClientMeasurementAsync()
+GenerateRandomClientsAsync()
+ExportClientsAsCsvAsync()
+...among others
+```
+
+---
+
+### Summary
+This project has been upgraded from a local-only data model to a fully API-backed architecture. Users can manage clients and their measurements, and the app supports API-driven features like search, batch deletion, and CSV export. The architecture is modular, clean, and scalable
+
 
 ## 7. Capstone Features List
 
@@ -144,10 +172,10 @@ Choose **at least 3** features from the list below and describe how you have imp
 - [?] **Unit Tests:** Create 3 or more unit tests for your application.
 - [ ] **Regex Validation:** Implement a regular expression to validate or ensure a field is always stored/displayed in the correct format.
 - [ ] **Dictionary/List Usage:** Create a dictionary or list, populate it with values, and retrieve at least one value for use in your program.
-- [?] **Data Writing:** Write information/data to a text file (e.g., log files, configuration files, CSV export).
+- [Y] **Data Writing:** Write information/data to a text file (e.g., log files, configuration files, CSV export).
 - [ ] **SOLID Principles Comments:** Add comments in your code explaining how you use at least 2 SOLID principles.
 - [ ] **Generic Class:** Create a generic class and use it within your application.
-- [ ] **API Endpoint:** Make your application an API with an endpoint (e.g., allow users to add a product via a POST request).
+- [Y] **API Endpoint:** Make your application an API with an endpoint (e.g., allow users to add a product via a POST request).
 - [Y] **CRUD API:** Implement a CRUD API in your application.
 - [Y] **Asynchronous Functionality:** Make your application asynchronous.
 - [Y] **Entity Join:** Use 2 or more related tables in your database and create a function that returns data from both (akin to a join).
@@ -161,13 +189,5 @@ Choose **at least 3** features from the list below and describe how you have imp
 
 - **Feedback Section:**  
 
----
 
-## 9. Submission Instructions
-
-- **Deadline:**  
-  Remember to complete and submit the provided Google Form by **Midnight EST on Sunday 2/23/25**.
-  
-- **Final Check:**  
-  Ensure every requirement is met before submission.
 
