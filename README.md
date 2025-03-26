@@ -7,10 +7,10 @@ SeamRipper
 
 -download the refactor-api-integration branch  
 -open the brach/sln in vs code  
--open the package manager console in vs-
--cd to the directory that contains the SeamRipperAPI project-
--once there run "dotnet run"- (leave running)
--should build and launch the api-
+-open the package manager console in vs-  
+-cd to the directory that contains the SeamRipperAPI project-  
+-once there run "dotnet run"- (leave running)  
+-should build and launch the api-  
 -it should create a local host, something like this in the package manager console "http://Localhost:5047/" 
 -copy that 
 -then go to the "SeamRipper" Project in the sln, navigate to the mauiprogram.cs file
