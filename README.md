@@ -5,8 +5,8 @@ SeamRipper
 
 # SETUP INSTRUCTIONS (api version)
 
--download the refactor-api-integration branch 
--open the brach/sln in vs code 
+-download the refactor-api-integration branch  
+-open the brach/sln in vs code  
 -open the package manager console in vs-
 -cd to the directory that contains the SeamRipperAPI project-
 -once there run "dotnet run"- (leave running)
