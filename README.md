@@ -45,11 +45,21 @@ if the above works fine, you can repeat this everytime to run the application, b
 be able to do a dual start in vs, just change the config start up projects to run  
 ---------SeamRipper    
 ---------SeamRipperAPI  
-once you do that you should be able to run it without doing the above everytime. That is up to you!
+once you do that you should be able to run it without doing the above everytime. That is up to you!  
+
+---there are a few unit test that can be run as well on either branch---
 
 SIDE NOTES:
 The delete button on the client measurements page just clears the measurements and resets them to zero which is what I
-intended, it just may throw you off, Im going to change the icon to make that more clear 
+intended, it just may throw you off, Im going to change the icon to make that more clear  
+
+(just an fyi for the commits ive done plenty for the project just moved repos a few times hahah)
+(these are not relevant other than for the "atleast 10 solid git commits)
+---other repos that started and worked on for the capstone before cleaning up and moving to this repo are
+---SideSeams---------AtTheSeams---------Seamster--
+---SideSeams.Data----AtTheSeams.Data--------------
+---SideSeams.Test---------------------------------
+---SideSeams.API----------------------------------
 
 # SETUP PROJECT MAIN BRANCH (this is the offline version)
   -You should be able to just download this branch and run it  
@@ -67,7 +77,7 @@ C:\Users\Eli\AppData\Local\Packages\com.companyname.seamripper_9zz4h110yvjzm\Loc
 ## 1. Project Overview
   
 Overview
-  "At The Seams" is a client measurement and tracking system designed for tailoring and alterations. The application allows tailors and seamstresses to store, retrieve, 
+  "SeamRipper" is a client measurement and tracking system designed for tailoring and alterations. The application allows tailors and seamstresses to store, retrieve, 
   and manage client information along with their associated measurements. It is built using Blazor (MAUI Hybrid) with MudBlazor, and it leverages SQLite as the database.
 
 Problem & Solution
