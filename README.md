@@ -10,9 +10,9 @@ SeamRipper
 
 2) open the brach/sln in vs code  
 
-3) open the package manager console in vs-  
+3) open the package manager console in vs  
 
-4) cd to the directory that contains the SeamRipperAPI project-  
+4) cd to the directory that contains the SeamRipperAPI project  
 
 5) once there run "dotnet run"- (leave running)  
 
