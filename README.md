@@ -47,7 +47,7 @@ be able to do a dual start in vs, just change the config start up projects to ru
 ---------SeamRipperAPI  
 once you do that you should be able to run it without doing the above everytime. That is up to you!
 
-# SETUP PROJECT MAIN (this is the offline version)
+# SETUP PROJECT MAIN BRANCH (this is the offline version)
   -You should be able to just download this branch and run it  
   -should work 
 
