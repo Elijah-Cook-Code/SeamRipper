@@ -57,7 +57,7 @@ intended, it just may throw you off, Im going to change the icon to make that mo
 
 # trouble shooting: (things to try if you have issues)  
 ------delete the old db and repeat the process above  
-DB location: (will also print in the output)  
+DB location: (will also print in the output)    
 📂 Database Path: C:\Users\Eli\AppData\Local\Packages\com.companyname.seamripper_9zz4h110yvjzm\LocalState\SeamRipper.db  
 
     
