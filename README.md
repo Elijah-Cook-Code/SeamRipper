@@ -200,7 +200,7 @@ This project has been upgraded from a local-only data model to a fully API-backe
 
 Choose **at least 3** features from the list below and describe how you have implemented them in your project:
 
-- [?] **Unit Tests:** Create 3 or more unit tests for your application.
+- [Y] **Unit Tests:** Create 3 or more unit tests for your application.
 - [ ] **Regex Validation:** Implement a regular expression to validate or ensure a field is always stored/displayed in the correct format.
 - [ ] **Dictionary/List Usage:** Create a dictionary or list, populate it with values, and retrieve at least one value for use in your program.
 - [Y] **Data Writing:** Write information/data to a text file (e.g., log files, configuration files, CSV export).
