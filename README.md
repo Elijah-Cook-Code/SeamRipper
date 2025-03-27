@@ -29,8 +29,8 @@ your local host as well no need to change this in the maui-program
 # notes:
     
 if the above works fine, you can repeat this everytime to run the application, but since/if the above worked you should 
-be able to do a dual start in vs, just change the config start up projects to run
-    -SeamRipper
+be able to do a dual start in vs, just change the config start up projects to run  
+    -SeamRipper    
     -SeamRipperAPI
 once you do that you should be able to run it without doing the above everytime. That is up to you!
 
