@@ -47,12 +47,19 @@ be able to do a dual start in vs, just change the config start up projects to ru
 ---------SeamRipperAPI  
 once you do that you should be able to run it without doing the above everytime. That is up to you!
 
+SIDE NOTES:
+The delete button on the client measurements page just clears the measurements and resets them to zero which is what I  
+intended, it just may throw you off, Im going to change the icon to make that more clear 
+
 # SETUP PROJECT MAIN BRANCH (this is the offline version)
   -You should be able to just download this branch and run it  
   -should work 
 
 # trouble shooting: (things to try if you have issues)  
-------delete the old db and repeat the process above 
+------delete the old db and repeat the process above  
+DB location: (will also print in the output)
+📂 Database Path: C:\Users\Eli\AppData\Local\Packages\com.companyname.seamripper_9zz4h110yvjzm\LocalState\SeamRipper.db  
+
     
 
 ## 1. Project Overview
