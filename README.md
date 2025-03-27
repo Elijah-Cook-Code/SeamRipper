@@ -30,16 +30,16 @@ your local host as well no need to change this in the maui-program
     
 if the above works fine, you can repeat this everytime to run the application, but since/if the above worked you should 
 be able to do a dual start in vs, just change the config start up projects to run  
-    -SeamRipper    
-    -SeamRipperAPI  
+---------SeamRipper    
+---------SeamRipperAPI  
 once you do that you should be able to run it without doing the above everytime. That is up to you!
 
 # SETUP PROJECT MAIN (this is the offline version)
-  -You should be able to just download this branch and run it
+  -You should be able to just download this branch and run it  
   -should work 
 
-# trouble shooting: (things to try if you have issues)
-    -delete the old db and repeat the process above 
+# trouble shooting: (things to try if you have issues)  
+------delete the old db and repeat the process above 
     
 
 ## 1. Project Overview
