@@ -1,7 +1,8 @@
 # SeamRipper
 SeamRipper
 
-# Please use the refactor-api-branch for my capstone (I didnt merge it because I want to revisit the main branch later)
+# Please use the refactor-api-branch for my capstone
+(I didnt merge it because I want to revisit the main branch later)
 
 # SETUP INSTRUCTIONS (api version)
 
