@@ -53,6 +53,7 @@ intended, it just may throw you off, Im going to change the icon to make that mo
 
 # SETUP PROJECT MAIN BRANCH (this is the offline version)
   -You should be able to just download this branch and run it  
+  -just make sure the start up project is "SeamRipper"
   -should work 
 
 # trouble shooting: (things to try if you have issues)  
