@@ -45,20 +45,39 @@ if the above works fine, you can repeat this everytime to run the application, b
 be able to do a dual start in vs, just change the config start up projects to run  
 ---------SeamRipper    
 ---------SeamRipperAPI  
-once you do that you should be able to run it without doing the above everytime. That is up to you!
+once you do that you should be able to run it without doing the above everytime. That is up to you!  
+
+---there are a few unit test that can be run as well on either branch---
+
+SIDE NOTES:
+The delete button on the client measurements page just clears the measurements and resets them to zero which is what I
+intended, it just may throw you off, Im going to change the icon to make that more clear  
+
+(just an fyi for the commits ive done plenty for the project just moved repos a few times hahah)  
+(these are not relevant other than for the "atleast 10 solid git commits)  
+---other repos that started and worked on for the capstone before cleaning up and moving to this repo are  
+---SideSeams---------AtTheSeams---------Seamster--  
+---SideSeams.Data----AtTheSeams.Data--------------  
+---SideSeams.Test---------------------------------  
+---SideSeams.API----------------------------------  
 
 # SETUP PROJECT MAIN BRANCH (this is the offline version)
   -You should be able to just download this branch and run it  
+  -just make sure the start up project is "SeamRipper"
   -should work 
 
 # trouble shooting: (things to try if you have issues)  
-------delete the old db and repeat the process above 
+------delete the old db and repeat the process above  
+DB location: (will also print in the output)    
+📂 Database Path:  
+C:\Users\Eli\AppData\Local\Packages\com.companyname.seamripper_9zz4h110yvjzm\LocalState\SeamRipper.db  
+
     
 
 ## 1. Project Overview
   
 Overview
-  "At The Seams" is a client measurement and tracking system designed for tailoring and alterations. The application allows tailors and seamstresses to store, retrieve, 
+  "SeamRipper" is a client measurement and tracking system designed for tailoring and alterations. The application allows tailors and seamstresses to store, retrieve, 
   and manage client information along with their associated measurements. It is built using Blazor (MAUI Hybrid) with MudBlazor, and it leverages SQLite as the database.
 
 Problem & Solution
@@ -181,7 +200,7 @@ This project has been upgraded from a local-only data model to a fully API-backe
 
 Choose **at least 3** features from the list below and describe how you have implemented them in your project:
 
-- [?] **Unit Tests:** Create 3 or more unit tests for your application.
+- [Y] **Unit Tests:** Create 3 or more unit tests for your application.
 - [ ] **Regex Validation:** Implement a regular expression to validate or ensure a field is always stored/displayed in the correct format.
 - [ ] **Dictionary/List Usage:** Create a dictionary or list, populate it with values, and retrieve at least one value for use in your program.
 - [Y] **Data Writing:** Write information/data to a text file (e.g., log files, configuration files, CSV export).
