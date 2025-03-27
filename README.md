@@ -5,38 +5,38 @@ SeamRipper
 
 # SETUP INSTRUCTIONS (api version)
 
--download the refactor-api-integration branch  
+1)download the refactor-api-integration branch  
 
--open the brach/sln in vs code  
+2)open the brach/sln in vs code  
 
--open the package manager console in vs-  
+3)open the package manager console in vs-  
 
--cd to the directory that contains the SeamRipperAPI project-  
+4)cd to the directory that contains the SeamRipperAPI project-  
 
--once there run "dotnet run"- (leave running)  
+5)once there run "dotnet run"- (leave running)  
 
--should build and launch the api-  
+6)should build and launch the api-  
 
--it should create a local host, something like this in the package manager console "http://Localhost:5047/"  
+7)it should create a local host, something like this in the package manager console "http://Localhost:5047/"  
 
--copy that  
+8)copy that  
 
--then go to the "SeamRipper" Project in the sln, navigate to the mauiprogram.cs file  
+9)then go to the "SeamRipper" Project in the sln, navigate to the mauiprogram.cs file  
 
--go to line 32 in the code or around there and find this line  
+10)go to line 32 in the code or around there and find this line  
 
 -----builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5047/") });  
 
 replace the local host with yours if a different one was created, if "http://Localhost:5047/" was created for  
 your local host as well no need to change this in the maui-program  
 
--make sure your api project is still running in the background/pmc  
+11)make sure your api project is still running in the background/pmc  
 
--next set "SeamRipper" in sln to main project/ or check to make sure it is  
+12)next set "SeamRipper" in sln to main project/ or check to make sure it is  
 
--run it  
+13)run it  
 
--the program should launch and use the api!
+14)the program should launch and use the api!
 
 # notes:
     
