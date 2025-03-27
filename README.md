@@ -53,13 +53,13 @@ SIDE NOTES:
 The delete button on the client measurements page just clears the measurements and resets them to zero which is what I
 intended, it just may throw you off, Im going to change the icon to make that more clear  
 
-(just an fyi for the commits ive done plenty for the project just moved repos a few times hahah)
-(these are not relevant other than for the "atleast 10 solid git commits)
----other repos that started and worked on for the capstone before cleaning up and moving to this repo are
----SideSeams---------AtTheSeams---------Seamster--
----SideSeams.Data----AtTheSeams.Data--------------
----SideSeams.Test---------------------------------
----SideSeams.API----------------------------------
+(just an fyi for the commits ive done plenty for the project just moved repos a few times hahah)  
+(these are not relevant other than for the "atleast 10 solid git commits)  
+---other repos that started and worked on for the capstone before cleaning up and moving to this repo are  
+---SideSeams---------AtTheSeams---------Seamster--  
+---SideSeams.Data----AtTheSeams.Data--------------  
+---SideSeams.Test---------------------------------  
+---SideSeams.API----------------------------------  
 
 # SETUP PROJECT MAIN BRANCH (this is the offline version)
   -You should be able to just download this branch and run it  
