@@ -15,9 +15,12 @@ SeamRipper
 -copy that  
 -then go to the "SeamRipper" Project in the sln, navigate to the mauiprogram.cs file  
 -go to line 32 in the code or around there and find this line  
-    builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5047/") });  
-        -replace the local host with yours if a different one was created, if "http://Localhost:5047/" was created for  
-    your local host as well no need to change this in the maui-program  
+
+-----builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5047/") });  
+
+replace the local host with yours if a different one was created, if "http://Localhost:5047/" was created for  
+your local host as well no need to change this in the maui-program  
+
 -make sure your api project is still running in the background/pmc  
 -next set "SeamRipper" in sln to main project/ or check to make sure it is  
 -run it  
