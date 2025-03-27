@@ -23,7 +23,7 @@ SeamRipper
 
 9) then go to the "SeamRipper" Project in the sln, navigate to the mauiprogram.cs file  
 
-10)go to line 32 in the code or around there and find this line  
+10) go to line 32 in the code or around there and find this line  
 
 -----builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5047/") });  
 
