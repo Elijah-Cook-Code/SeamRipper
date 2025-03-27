@@ -192,14 +192,3 @@ Choose **at least 3** features from the list below and describe how you have imp
 - [Y] **Asynchronous Functionality:** Make your application asynchronous.
 - [Y] **Entity Join:** Use 2 or more related tables in your database and create a function that returns data from both (akin to a join).
 
----
-
-## 8. Additional Notes and Mentor Feedback
-
-- **Questions/Concerns:**  
-
-
-- **Feedback Section:**  
-
-
-
