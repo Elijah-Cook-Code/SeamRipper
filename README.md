@@ -191,4 +191,5 @@ Choose **at least 3** features from the list below and describe how you have imp
 - [Y] **CRUD API:** Implement a CRUD API in your application.
 - [Y] **Asynchronous Functionality:** Make your application asynchronous.
 - [Y] **Entity Join:** Use 2 or more related tables in your database and create a function that returns data from both (akin to a join).
-
+  
+----
