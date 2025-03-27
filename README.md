@@ -86,11 +86,6 @@ Asynchronous Operations
 - **Future Goals:**  
   - **Goal 2:** Use information in DB to expedite drafting, by performing calculations on measurements from the DB
   - **Goal 3:** Create Garment object based on selected Client, by parsing the Clients data, taking the required measurements for the Garment(object) requested based on its requirements  
- 
-## 5. Visual Appeal
-
-- **Design & UX:**  
-  -atm more concered with building the skeleton of the program then looking to focus more on this at a later date, I do have some ideas for it. I'd like it to present the different tables, client info, client measurements. The allow the user to interact with them as needed and maybe in the future have it create a table that will create garments based on the clients information and put that into a new table 
 
 ### API Integration (Refactor Branch)
 
